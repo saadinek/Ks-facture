@@ -77,9 +77,7 @@ const BLANK = { description: '', quantity: 1, unit_price: 0 }
 
 function LineItem({ item, idx, onChange, onRemove, solo }) {
   return (
-    <div style={{
-      display: 'grid', gridTemplateColumns: '1fr 90px 110px auto',
-      gap: 10, alignItems: 'center',
+    <div className="line-item-grid" style={{
       padding: '10px 14px', background: '#FAFAF8',
       borderRadius: 10, border: '1px solid #F0EEE9',
     }}>
@@ -107,8 +105,8 @@ function LineItem({ item, idx, onChange, onRemove, solo }) {
         onFocus={e => e.target.style.borderColor = '#111110'}
         onBlur={e => e.target.style.borderColor = '#ECEAE4'}
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#111110', ...NUM, minWidth: 90, textAlign: 'right' }}>
+      <div className="line-item-total" style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#111110', ...NUM, textAlign: 'right' }}>
           {formatCurrency(Number(item.quantity) * Number(item.unit_price))}
         </span>
         <button
@@ -176,9 +174,9 @@ function TemplatesPanel({ templates, onAdd, selectedClientName }) {
             onMouseEnter={e => e.currentTarget.style.opacity = '.88'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <Plus size={13} />
-              {quickTemplate.label}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 7, overflow: 'hidden', minWidth: 0 }}>
+              <Plus size={13} style={{ flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quickTemplate.label}</span>
             </span>
             <span style={{ ...NUM, fontSize: 13, fontWeight: 700, opacity: .9 }}>
               {formatCurrency(quickTemplate.unit_price)}
@@ -200,14 +198,15 @@ function TemplatesPanel({ templates, onAdd, selectedClientName }) {
               background: '#fff', color: '#3D3C3A',
               border: '1.5px solid #E0DEFF', borderRadius: 7,
               padding: '5px 11px', fontSize: 12, fontWeight: 500,
-              cursor: 'pointer', transition: 'all .15s', whiteSpace: 'nowrap',
+              cursor: 'pointer', transition: 'all .15s',
+              maxWidth: '100%', overflow: 'hidden',
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#4F46E5'; e.currentTarget.style.color = '#4F46E5'; e.currentTarget.style.background = '#F0EFFE' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0DEFF'; e.currentTarget.style.color = '#3D3C3A'; e.currentTarget.style.background = '#fff' }}
           >
-            <Plus size={11} />
-            <span>{tpl.label}</span>
-            <span style={{ ...NUM, fontSize: 11, fontWeight: 600, color: '#6B6860', marginLeft: 2 }}>
+            <Plus size={11} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{tpl.label}</span>
+            <span style={{ ...NUM, fontSize: 11, fontWeight: 600, color: '#6B6860', flexShrink: 0 }}>
               {formatCurrency(tpl.unit_price)}
             </span>
           </button>
@@ -342,7 +341,7 @@ export default function InvoiceForm({ type, edit = false }) {
   // ─────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: 800, display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ maxWidth: 800, width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -374,7 +373,7 @@ export default function InvoiceForm({ type, edit = false }) {
           <div style={{ marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid #F0EEE9' }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: '#111110', margin: 0 }}>Informations générales</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="form-grid-2col">
 
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelBase}>Client</label>
@@ -465,8 +464,8 @@ export default function InvoiceForm({ type, edit = false }) {
             selectedClientName={selectedClientName}
           />
 
-          {/* Col labels */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 110px auto', gap: 10, marginBottom: 8, paddingLeft: 14, paddingRight: 14 }}>
+          {/* Col labels — hidden on mobile */}
+          <div className="hide-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 90px 110px auto', gap: 10, marginBottom: 8, paddingLeft: 14, paddingRight: 14 }}>
             {['Description', 'Quantité', 'Prix unit. HT', ''].map(h => (
               <span key={h} style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#B0ADA8' }}>{h}</span>
             ))}
@@ -485,9 +484,9 @@ export default function InvoiceForm({ type, edit = false }) {
             <Plus size={14} />Ajouter une ligne
           </button>
 
-          {/* Totals */}
+          {/* Totals — full width on mobile */}
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1.5px solid #ECEAE4' }}>
-            <div style={{ marginLeft: 'auto', width: 280 }}>
+            <div style={{ marginLeft: 'auto', width: '100%', maxWidth: 280 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 13, color: '#6B6860' }}>Sous-total HT</span>
                 <span style={{ fontSize: 13, color: '#6B6860', ...NUM }}>{formatCurrency(subtotal)}</span>

@@ -3,10 +3,11 @@
  * Imports : uniquement des chemins relatifs depuis src/components/
  */
 
+import { useState } from 'react'
 import { NavLink, Outlet, Navigate, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, Receipt,
-  Settings, LogOut, Zap,
+  Settings, LogOut, Zap, Menu, X as XIcon,
 } from 'lucide-react'
 import { cn, initials, STATUS_LABEL, STATUS_STYLE } from '../utils/utils.js'
 import { useAuthStore }                             from '../store/authStore.js'
@@ -206,16 +207,18 @@ const NAV = [
   { to: '/factures', icon: Receipt,         label: 'Factures'   },
 ]
 
-export function Sidebar() {
+// SidebarContent is the inner markup — shared between desktop
+// (always visible) and mobile (shown inside a drawer overlay).
+function SidebarContent({ onNavClick }) {
   const { profile, signOut } = useAuthStore()
   const navigate = useNavigate()
 
   const doSignOut = async () => { await signOut(); navigate('/login') }
 
   return (
-    <aside className="w-56 shrink-0 h-screen sticky top-0 flex flex-col bg-white border-r border-[#E8E6E0]">
+    <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 h-14 border-b border-[#E8E6E0]">
+      <div className="flex items-center gap-2.5 px-5 h-14 border-b border-[#E8E6E0] shrink-0">
         <div className="w-7 h-7 rounded-lg bg-[#2563EB] flex items-center justify-center">
           <Zap size={14} className="text-white" />
         </div>
@@ -229,6 +232,7 @@ export function Sidebar() {
             key={to}
             to={to}
             end={to === '/'}
+            onClick={onNavClick}
             className={({ isActive }) => cn(
               'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all group',
               isActive
@@ -252,9 +256,10 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-[#E8E6E0] p-3 space-y-0.5">
+      <div className="border-t border-[#E8E6E0] p-3 space-y-0.5 shrink-0">
         <NavLink
           to="/settings"
+          onClick={onNavClick}
           className={({ isActive }) => cn(
             'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all group w-full',
             isActive
@@ -291,20 +296,83 @@ export function Sidebar() {
           Déconnexion
         </button>
       </div>
+    </div>
+  )
+}
+
+export function Sidebar() {
+  return (
+    <aside className="w-56 shrink-0 h-screen sticky top-0 flex flex-col bg-white border-r border-[#E8E6E0]">
+      <SidebarContent onNavClick={undefined} />
     </aside>
   )
 }
 
 // ══════════════════════════════════════════════════════════════
-//  APP LAYOUT
+//  APP LAYOUT  — responsive: sidebar on desktop, drawer on mobile
 // ══════════════════════════════════════════════════════════════
 
 export function AppLayout() {
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const close = () => setMobileOpen(false)
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F7F6F3]">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 py-8">
+
+      {/* ── Desktop sidebar — hidden on mobile ── */}
+      <aside className="hidden md:flex w-56 shrink-0 h-screen sticky top-0 flex-col bg-white border-r border-[#E8E6E0]">
+        <SidebarContent onNavClick={undefined} />
+      </aside>
+
+      {/* ── Mobile: backdrop overlay ── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={close}
+        />
+      )}
+
+      {/* ── Mobile: slide-in drawer ── */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#E8E6E0]',
+          'transform transition-transform duration-250 ease-in-out md:hidden',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        {/* Close button inside drawer */}
+        <button
+          onClick={close}
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg text-[#A8A5A0] hover:text-[#1A1917] hover:bg-[#F7F6F3] transition-colors"
+          aria-label="Fermer le menu"
+        >
+          <XIcon size={18} />
+        </button>
+        <SidebarContent onNavClick={close} />
+      </aside>
+
+      {/* ── Main content ── */}
+      <main className="flex-1 overflow-y-auto min-w-0">
+
+        {/* Mobile top bar with hamburger */}
+        <div className="md:hidden flex items-center gap-3 px-4 h-14 bg-white border-b border-[#E8E6E0] sticky top-0 z-30">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-[#6B6860] hover:bg-[#F7F6F3] transition-colors"
+            aria-label="Ouvrir le menu"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-[#2563EB] flex items-center justify-center">
+              <Zap size={12} className="text-white" />
+            </div>
+            <span className="font-semibold text-sm text-[#1A1917]">KS Facture</span>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <div className="max-w-5xl mx-auto px-4 py-5 md:px-8 md:py-8">
           <Outlet />
         </div>
       </main>

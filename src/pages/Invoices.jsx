@@ -44,8 +44,8 @@ function StatusPill({ status }) {
 
 function SkeletonRow() {
   return (
-    <div className="animate-pulse" style={{
-      display: 'grid', gridTemplateColumns: '130px 1fr 105px 130px 110px 24px',
+    <div className="animate-pulse table-row-desktop" style={{
+      gridTemplateColumns: '130px 1fr 105px 130px 110px 24px',
       gap: 16, padding: '14px 24px', borderBottom: '1px solid #F5F4F1',
     }}>
       {[130, 200, 80, 100, 80, 14].map((w, i) => (
@@ -99,17 +99,17 @@ export default function Invoices({ type }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-        <div>
+      <div className="page-header">
+        <div style={{ minWidth: 0, flex: 1 }}>
           <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111110', letterSpacing: '-0.02em', margin: 0 }}>
             {isFacture ? 'Factures' : 'Devis'}
           </h1>
-          <p style={{ fontSize: 13, color: '#9B9891', marginTop: 5 }}>
+          <p style={{ fontSize: 13, color: '#9B9891', marginTop: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {all.length} document{all.length !== 1 ? 's' : ''}
             {all.length > 0 && ` · ${formatCurrency(all.reduce((s, i) => s + (i.total ?? 0), 0))} au total`}
           </p>
         </div>
-        <Link to={newPath}>
+        <Link to={newPath} style={{ flexShrink: 0 }}>
           <Btn><Plus size={14} />{isFacture ? 'Nouvelle facture' : 'Nouveau devis'}</Btn>
         </Link>
       </div>
@@ -195,9 +195,9 @@ export default function Invoices({ type }) {
       ) : (
         <div style={{ background: '#fff', border: '1px solid #ECEAE4', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.05)' }}>
 
-          {/* Col headers */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: '130px 1fr 105px 130px 110px 24px',
+          {/* Col headers — desktop only */}
+          <div className="table-header-desktop" style={{
+            gridTemplateColumns: '130px 1fr 105px 130px 110px 24px',
             gap: 16, padding: '10px 24px',
             background: '#FAFAF8', borderBottom: '1px solid #ECEAE4',
           }}>
@@ -211,42 +211,63 @@ export default function Invoices({ type }) {
           {/* Rows */}
           <div>
             {filtered.map((inv, idx) => (
-              <Link
-                key={inv.id}
-                to={`${base}/${inv.id}`}
-                style={{
-                  display: 'grid', gridTemplateColumns: '130px 1fr 105px 130px 110px 24px',
-                  gap: 16, alignItems: 'center', padding: '13px 24px',
-                  borderBottom: idx < filtered.length - 1 ? '1px solid #F5F4F1' : 'none',
-                  textDecoration: 'none', transition: 'background .12s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#B0ADA8' }}>
-                  {inv.number}
-                </span>
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: '#111110', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
-                    {inv.clients?.name ?? <span style={{ color: '#B0ADA8', fontStyle: 'italic' }}>—</span>}
-                  </p>
-                  {inv.clients?.company && (
-                    <p style={{ fontSize: 11, color: '#B0ADA8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0, marginTop: 1 }}>
-                      {inv.clients.company}
+              <Link key={inv.id} to={`${base}/${inv.id}`} style={{ textDecoration: 'none' }}>
+                {/* Desktop row */}
+                <div
+                  className="table-row-desktop"
+                  style={{
+                    gridTemplateColumns: '130px 1fr 105px 130px 110px 24px',
+                    gap: 16, alignItems: 'center', padding: '13px 24px',
+                    borderBottom: idx < filtered.length - 1 ? '1px solid #F5F4F1' : 'none',
+                    transition: 'background .12s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#B0ADA8' }}>{inv.number}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: '#111110', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+                      {inv.clients?.name ?? <span style={{ color: '#B0ADA8', fontStyle: 'italic' }}>—</span>}
                     </p>
-                  )}
+                    {inv.clients?.company && (
+                      <p style={{ fontSize: 11, color: '#B0ADA8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0, marginTop: 1 }}>{inv.clients.company}</p>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 12, color: '#9B9891' }}>{formatDate(inv.issue_date)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#111110', fontFamily: 'DM Mono, monospace' }}>{formatCurrency(inv.total)}</span>
+                  <StatusPill status={inv.status} />
+                  <ArrowRight size={13} style={{ color: '#D8D5CF' }} />
                 </div>
-                <span style={{ fontSize: 12, color: '#9B9891' }}>{formatDate(inv.issue_date)}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#111110', fontFamily: 'DM Mono, monospace' }}>
-                  {formatCurrency(inv.total)}
-                </span>
-                <StatusPill status={inv.status} />
-                <ArrowRight size={13} style={{ color: '#D8D5CF' }} />
+                {/* Mobile card */}
+                <div
+                  className="card-row-mobile"
+                  style={{
+                    flexDirection: 'column', padding: '12px 16px', gap: 5,
+                    borderBottom: idx < filtered.length - 1 ? '1px solid #F5F4F1' : 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#B0ADA8' }}>{inv.number}</span>
+                    <StatusPill status={inv.status} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ minWidth: 0, flex: 1, marginRight: 8 }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#111110', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {inv.clients?.name ?? <span style={{ color: '#B0ADA8', fontStyle: 'italic' }}>—</span>}
+                      </p>
+                      {inv.clients?.company && (
+                        <p style={{ fontSize: 12, color: '#9B9891', margin: '1px 0 0' }}>{inv.clients.company}</p>
+                      )}
+                    </div>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#111110', fontFamily: 'DM Mono, monospace', flexShrink: 0 }}>{formatCurrency(inv.total)}</span>
+                  </div>
+                  <span style={{ fontSize: 12, color: '#9B9891' }}>{formatDate(inv.issue_date)}</span>
+                </div>
               </Link>
             ))}
           </div>
 
-          {/* Footer — same data as original */}
+          {/* Footer */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '12px 24px', borderTop: '1px solid #F0EEE9', background: '#FAFAF8',

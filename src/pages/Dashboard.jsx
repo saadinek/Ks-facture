@@ -101,8 +101,8 @@ function AddExpenseForm({ onClose }) {
   const bl = e => e.target.style.borderColor = '#ECEAE4'
 
   return (
-    <div style={{ padding: '14px 20px', background: '#FFF7ED', borderTop: '1px solid #FED7AA' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 120px 160px auto', gap: 8, alignItems: 'flex-start' }}>
+      <div style={{ padding: '14px 20px', background: '#FFF7ED', borderTop: '1px solid #FED7AA' }}>
+      <div className="expense-form-grid">
         <div>
           <input autoFocus value={draft.label}
             onChange={e => setDraft(p => ({ ...p, label: e.target.value }))}
@@ -178,7 +178,7 @@ export default function Dashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <div className="page-header">
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111110', letterSpacing: '-0.02em', margin: 0 }}>
             {greet}{firstName ? `, ${firstName}` : ''} 👋
@@ -191,7 +191,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Invoice KPIs — 4 cards unchanged ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+      <div className="grid-kpi">
         {loading ? (
           [1, 2, 3, 4].map(i => <KpiSkeleton key={i} />)
         ) : (
@@ -213,7 +213,7 @@ export default function Dashboard() {
               Suivi financier
             </span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          <div className="grid-finance">
             <KpiCard
               label="Revenus encaissés"
               value={formatCurrency(revenue)}
@@ -274,10 +274,10 @@ export default function Dashboard() {
           <AddExpenseForm onClose={() => setShowAddExpense(false)} />
         )}
 
-        {/* Column headers */}
+        {/* Column headers — hidden on mobile */}
         {recentExpenses.length > 0 && (
-          <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 110px 100px 150px 28px',
+          <div className="table-header-desktop" style={{
+            gridTemplateColumns: '1fr 110px 100px 150px 28px',
             gap: 16, padding: '9px 24px',
             background: '#FAFAF8', borderBottom: '1px solid #F0EEE9',
           }}>
@@ -304,68 +304,68 @@ export default function Dashboard() {
         ) : (
           <div>
             {recentExpenses.map((exp, idx) => (
-              <div
-                key={exp.id}
-                style={{
-                  display: 'grid', gridTemplateColumns: '1fr 110px 100px 150px 28px',
-                  gap: 16, alignItems: 'center', padding: '12px 24px',
-                  borderBottom: idx < recentExpenses.length - 1 ? '1px solid #F5F4F1' : 'none',
-                  transition: 'background .12s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ fontSize: 13, fontWeight: 500, color: '#111110', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {exp.label}
-                </span>
-                <span style={{ ...NUM, fontSize: 13, fontWeight: 600, color: '#C2410C' }}>
-                  {formatCurrency(exp.amount)}
-                </span>
-                <span style={{ ...NUM, fontSize: 12, color: '#9B9891' }}>
-                  {formatDate(exp.expense_date)}
-                </span>
-                <span style={{
-                  fontSize: 11, fontWeight: 500, color: '#C2410C',
-                  background: '#FFF7ED', border: '1px solid #FED7AA',
-                  borderRadius: 6, padding: '2px 8px',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  display: 'inline-block', maxWidth: '100%',
-                }}>
-                  {exp.category}
-                </span>
-                <button
-                  onClick={() => deleteMut.mutate(exp.id)}
-                  disabled={deleteMut.isPending}
+              <div key={exp.id}>
+                {/* Desktop row */}
+                <div
+                  className="table-row-desktop"
                   style={{
-                    width: 26, height: 26, borderRadius: 6, border: 'none',
-                    background: 'transparent', color: '#D0CEC7',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', transition: 'all .15s', padding: 0,
+                    gridTemplateColumns: '1fr 110px 100px 150px 28px',
+                    gap: 16, alignItems: 'center', padding: '12px 24px',
+                    borderBottom: idx < recentExpenses.length - 1 ? '1px solid #F5F4F1' : 'none',
+                    transition: 'background .12s',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEF2F2' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = '#D0CEC7'; e.currentTarget.style.background = 'transparent' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <Trash2 size={12} />
-                </button>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#111110', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.label}</span>
+                  <span style={{ ...NUM, fontSize: 13, fontWeight: 600, color: '#C2410C' }}>{formatCurrency(exp.amount)}</span>
+                  <span style={{ ...NUM, fontSize: 12, color: '#9B9891' }}>{formatDate(exp.expense_date)}</span>
+                  <span style={{ fontSize: 11, fontWeight: 500, color: '#C2410C', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 6, padding: '2px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block', maxWidth: '100%' }}>{exp.category}</span>
+                  <button onClick={() => deleteMut.mutate(exp.id)} disabled={deleteMut.isPending}
+                    style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: 'transparent', color: '#D0CEC7', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all .15s', padding: 0 }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEF2F2' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#D0CEC7'; e.currentTarget.style.background = 'transparent' }}
+                  ><Trash2 size={12} /></button>
+                </div>
+                {/* Mobile card */}
+                <div
+                  className="card-row-mobile"
+                  style={{
+                    flexDirection: 'column', padding: '12px 16px', gap: 4,
+                    borderBottom: idx < recentExpenses.length - 1 ? '1px solid #F5F4F1' : 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: '#111110', flex: 1, marginRight: 8 }}>{exp.label}</span>
+                    <span style={{ ...NUM, fontSize: 13, fontWeight: 700, color: '#C2410C', flexShrink: 0 }}>{formatCurrency(exp.amount)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ fontSize: 11, fontWeight: 500, color: '#C2410C', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 5, padding: '1px 7px' }}>{exp.category}</span>
+                      <span style={{ ...NUM, fontSize: 11, color: '#9B9891' }}>{formatDate(exp.expense_date)}</span>
+                    </div>
+                    <button onClick={() => deleteMut.mutate(exp.id)} disabled={deleteMut.isPending}
+                      style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: 'transparent', color: '#D0CEC7', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    ><Trash2 size={12} /></button>
+                  </div>
+                </div>
               </div>
             ))}
 
-            {/* Footer with total if more than shown */}
+            {/* Footer */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 24px', background: '#FAFAF8', borderTop: '1px solid #F0EEE9' }}>
               <span style={{ fontSize: 12, color: '#B0ADA8' }}>
                 {expenses.length > recentExpenses.length
-                  ? `Affichage des ${recentExpenses.length} plus récentes · ${expenses.length} au total`
+                  ? `${recentExpenses.length} / ${expenses.length}`
                   : `${expenses.length} dépense${expenses.length !== 1 ? 's' : ''}`}
               </span>
-              <span style={{ ...NUM, fontSize: 13, fontWeight: 700, color: '#C2410C' }}>
-                {formatCurrency(totalExpenses)}
-              </span>
+              <span style={{ ...NUM, fontSize: 13, fontWeight: 700, color: '#C2410C' }}>{formatCurrency(totalExpenses)}</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Activité récente — unchanged ── */}
+      {/* ── Activité récente ── */}
       <div style={{ background: '#fff', border: '1px solid #ECEAE4', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.05)' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid #F0EEE9' }}>
@@ -378,8 +378,9 @@ export default function Dashboard() {
           </Link>
         </div>
 
+        {/* Desktop column headers */}
         {!loading && recent.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr 110px 130px 115px 24px', gap: 16, padding: '9px 24px', background: '#FAFAF8', borderBottom: '1px solid #F0EEE9' }}>
+          <div className="table-header-desktop" style={{ gridTemplateColumns: '130px 1fr 110px 130px 115px 24px', gap: 16, padding: '9px 24px', background: '#FAFAF8', borderBottom: '1px solid #F0EEE9' }}>
             {['Numéro', 'Client', 'Date', 'Montant', 'Statut', ''].map(h => (
               <span key={h} style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#B0ADA8' }}>{h}</span>
             ))}
@@ -399,26 +400,45 @@ export default function Dashboard() {
         ) : (
           <div>
             {recent.map((inv, idx) => (
-              <Link
-                key={inv.id}
-                to={`/factures/${inv.id}`}
-                style={{
-                  display: 'grid', gridTemplateColumns: '130px 1fr 110px 130px 115px 24px',
-                  gap: 16, alignItems: 'center', padding: '13px 24px',
-                  borderBottom: idx < recent.length - 1 ? '1px solid #F5F4F1' : 'none',
-                  textDecoration: 'none', transition: 'background .12s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ ...NUM, fontSize: 11, color: '#B0ADA8' }}>{inv.number}</span>
-                <span style={{ fontSize: 13, fontWeight: 500, color: '#111110', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {inv.clients?.name ?? '—'}
-                </span>
-                <span style={{ ...NUM, fontSize: 12, color: '#9B9891' }}>{formatDate(inv.issue_date)}</span>
-                <span style={{ ...NUM, fontSize: 13, fontWeight: 600, color: '#111110' }}>{formatCurrency(inv.total)}</span>
-                <Badge status={inv.status} />
-                <ArrowRight size={13} style={{ color: '#D8D5CF' }} />
+              <Link key={inv.id} to={`/factures/${inv.id}`} style={{ textDecoration: 'none' }}>
+                {/* Desktop row */}
+                <div
+                  className="table-row-desktop"
+                  style={{
+                    gridTemplateColumns: '130px 1fr 110px 130px 115px 24px',
+                    gap: 16, alignItems: 'center', padding: '13px 24px',
+                    borderBottom: idx < recent.length - 1 ? '1px solid #F5F4F1' : 'none',
+                    transition: 'background .12s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ ...NUM, fontSize: 11, color: '#B0ADA8' }}>{inv.number}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#111110', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.clients?.name ?? '—'}</span>
+                  <span style={{ ...NUM, fontSize: 12, color: '#9B9891' }}>{formatDate(inv.issue_date)}</span>
+                  <span style={{ ...NUM, fontSize: 13, fontWeight: 600, color: '#111110' }}>{formatCurrency(inv.total)}</span>
+                  <Badge status={inv.status} />
+                  <ArrowRight size={13} style={{ color: '#D8D5CF' }} />
+                </div>
+                {/* Mobile card */}
+                <div
+                  className="card-row-mobile"
+                  style={{
+                    flexDirection: 'column', padding: '12px 16px', gap: 4,
+                    borderBottom: idx < recent.length - 1 ? '1px solid #F5F4F1' : 'none',
+                    background: 'transparent',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ ...NUM, fontSize: 11, color: '#B0ADA8' }}>{inv.number}</span>
+                    <Badge status={inv.status} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#111110' }}>{inv.clients?.name ?? '—'}</span>
+                    <span style={{ ...NUM, fontSize: 13, fontWeight: 700, color: '#111110' }}>{formatCurrency(inv.total)}</span>
+                  </div>
+                  <span style={{ ...NUM, fontSize: 11, color: '#9B9891' }}>{formatDate(inv.issue_date)}</span>
+                </div>
               </Link>
             ))}
           </div>

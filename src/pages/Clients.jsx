@@ -99,9 +99,8 @@ function NewClientModal({ onClose }) {
 
   return (
     <Modal title="Nouveau client" onClose={onClose}>
-      {/* Same form fields as original — using Field from ui.jsx */}
-      <form onSubmit={submit} className="px-6 py-5 space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+      <form onSubmit={submit} className="px-4 py-5 space-y-3">
+        <div className="form-grid-2col">
           <Field label="Nom *"      value={f.name}    onChange={set('name')}    placeholder="Prénom Nom"       wrap="col-span-2" />
           <Field label="Entreprise" value={f.company} onChange={set('company')} placeholder="SARL XYZ" />
           <Field label="ICE"        value={f.ice}     onChange={set('ice')}     placeholder="000000000000000" />
@@ -159,7 +158,7 @@ export default function Clients() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+      <div className="page-header">
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111110', letterSpacing: '-0.02em', margin: 0 }}>
             Clients
@@ -258,7 +257,7 @@ export default function Clients() {
             >
               <ClientAvatar name={c.name} />
 
-              {/* Name + company */}
+              {/* Name + company + threshold badge on mobile */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 14, fontWeight: 600, color: '#111110', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {c.name}
@@ -268,20 +267,26 @@ export default function Clients() {
                     <Building2 size={11} />{c.company}
                   </p>
                 )}
+                {/* Threshold badge shown inline below name on mobile */}
+                <span className="show-mobile-inline">
+                  <ClientThresholdBadge clientId={c.id} clientTotals={clientTotals} />
+                </span>
               </div>
 
-              {/* 80k threshold badge */}
-              <ClientThresholdBadge clientId={c.id} clientTotals={clientTotals} />
+              {/* 80k threshold badge — desktop only */}
+              <span className="hide-mobile">
+                <ClientThresholdBadge clientId={c.id} clientTotals={clientTotals} />
+              </span>
 
-              {/* Email */}
+              {/* Email — hidden on mobile */}
               {c.email && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#B0ADA8', flexShrink: 0 }}>
+                <span className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#B0ADA8', flexShrink: 0 }}>
                   <Mail size={12} />{c.email}
                 </span>
               )}
 
-              {/* Date */}
-              <span style={{ fontSize: 11, color: '#C4C2BD', flexShrink: 0, minWidth: 80, textAlign: 'right' }}>
+              {/* Date — hidden on mobile */}
+              <span className="hide-mobile" style={{ fontSize: 11, color: '#C4C2BD', flexShrink: 0, minWidth: 80, textAlign: 'right' }}>
                 {formatDate(c.created_at)}
               </span>
 

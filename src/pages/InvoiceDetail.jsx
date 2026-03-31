@@ -276,6 +276,32 @@ export default function InvoiceDetail() {
           margin: 0 auto;
         }
 
+        /* ── Mobile invoice adjustments ── */
+        @media (max-width: 767px) {
+          .invoice-emitter-meta {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .invoice-emitter-meta > *:last-child {
+            text-align: left !important;
+          }
+          .invoice-emitter-meta table {
+            margin-left: 0 !important;
+          }
+          .invoice-client-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .invoice-items-table th,
+          .invoice-items-table td {
+            padding: 8px 8px !important;
+            font-size: 12px !important;
+          }
+          .invoice-items-table th:nth-child(3),
+          .invoice-items-table td:nth-child(3) {
+            display: none !important;
+          }
+        }
+
         /* ── Print ── */
         @media print {
           /* 1. Hide all app chrome */
@@ -397,7 +423,9 @@ export default function InvoiceDetail() {
         </div>
 
         {/* ── 2. Emitter (left) + Invoice meta (right) ─────── */}
-        <div style={{
+        <div
+          className="invoice-emitter-meta"
+          style={{
           display: 'grid',
           gridTemplateColumns: '1fr auto',
           gap: 32,
@@ -483,7 +511,7 @@ export default function InvoiceDetail() {
             Facturé à
           </p>
           {client ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 32, rowGap: 2 }}>
+            <div className="invoice-client-grid" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 32, rowGap: 2 }}>
               {/* Client name — full width */}
               <p style={{ fontWeight: 700, fontSize: 14, color: '#111110', margin: 0, gridColumn: '1 / -1', marginBottom: 5 }}>
                 {client.name || client.company || '—'}
@@ -523,7 +551,7 @@ export default function InvoiceDetail() {
 
         {/* ── 4. Line items table ───────────────────────────── */}
         <div style={{ padding: `0 ${G}` }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="invoice-items-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: ACCENT }}>
                 {[
