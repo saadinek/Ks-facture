@@ -1,0 +1,77 @@
+table_name,column_name,data_type,is_nullable,column_default
+clients,id,uuid,NO,gen_random_uuid()
+clients,user_id,uuid,NO,null
+clients,client_name,text,YES,null
+clients,company_name,text,YES,null
+clients,ice,text,YES,null
+clients,address,text,YES,null
+clients,city,text,YES,null
+clients,phone,text,YES,null
+clients,email,text,YES,null
+clients,notes,text,YES,null
+clients,created_at,timestamp with time zone,YES,now()
+clients,updated_at,timestamp with time zone,YES,now()
+clients,company,text,YES,null
+clients,name,text,YES,null
+expenses,id,uuid,NO,gen_random_uuid()
+expenses,user_id,uuid,NO,null
+expenses,label,text,NO,null
+expenses,amount,numeric,NO,0
+expenses,expense_date,date,NO,CURRENT_DATE
+expenses,category,text,NO,'Autre'::text
+expenses,notes,text,NO,''::text
+expenses,created_at,timestamp with time zone,NO,now()
+invoice_items,id,uuid,NO,gen_random_uuid()
+invoice_items,invoice_id,uuid,YES,null
+invoice_items,description,text,YES,null
+invoice_items,quantity,numeric,YES,1
+invoice_items,unit_price,numeric,YES,0
+invoice_items,line_total,numeric,YES,0
+invoice_items,created_at,timestamp with time zone,YES,now()
+invoice_items,amount,numeric,YES,0
+invoices,id,uuid,NO,gen_random_uuid()
+invoices,user_id,uuid,NO,null
+invoices,client_id,uuid,YES,null
+invoices,invoice_number,text,YES,null
+invoices,invoice_date,date,YES,null
+invoices,subtotal,numeric,YES,0
+invoices,total,numeric,YES,0
+invoices,total_in_words,text,YES,null
+invoices,payment_status,text,YES,'unpaid'::text
+invoices,notes,text,YES,null
+invoices,created_at,timestamp with time zone,YES,now()
+invoices,updated_at,timestamp with time zone,YES,now()
+invoices,due_date,date,YES,null
+invoices,status,text,YES,'draft'::text
+invoices,tax,numeric,YES,0
+invoices,issue_date,date,YES,null
+invoices,amount_paid,numeric,YES,0
+invoices,balance_due,numeric,YES,0
+invoices,number,text,YES,null
+invoices,type,text,YES,null
+invoices,tax_rate,numeric,YES,0
+invoices,tax_amount,numeric,YES,0
+profiles,id,uuid,NO,gen_random_uuid()
+profiles,user_id,uuid,YES,null
+profiles,full_name,text,YES,null
+profiles,business_name,text,YES,null
+profiles,status,text,YES,'Auto-entrepreneur'::text
+profiles,ice,text,YES,null
+profiles,if_number,text,YES,null
+profiles,address,text,YES,null
+profiles,city,text,YES,null
+profiles,phone,text,YES,null
+profiles,email,text,YES,null
+profiles,logo_url,text,YES,null
+profiles,signature_url,text,YES,null
+profiles,created_at,timestamp with time zone,YES,now()
+profiles,updated_at,timestamp with time zone,YES,now()
+profiles,company,text,YES,null
+profiles,currency,text,YES,'MAD'::text
+service_templates,id,uuid,NO,gen_random_uuid()
+service_templates,user_id,uuid,NO,null
+service_templates,label,text,NO,null
+service_templates,description,text,NO,''::text
+service_templates,unit_price,numeric,NO,0
+service_templates,sort_order,integer,NO,0
+service_templates,created_at,timestamp with time zone,NO,now()

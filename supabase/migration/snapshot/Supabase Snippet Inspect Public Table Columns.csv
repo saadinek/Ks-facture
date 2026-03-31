@@ -1,0 +1,33 @@
+table_name,constraint_name,constraint_type,column_name,foreign_table_name,foreign_column_name
+clients,2200_17560_1_not_null,CHECK,null,null,null
+clients,2200_17560_2_not_null,CHECK,null,null,null
+clients,clients_pkey,PRIMARY KEY,id,clients,id
+expenses,2200_18742_1_not_null,CHECK,null,null,null
+expenses,2200_18742_2_not_null,CHECK,null,null,null
+expenses,2200_18742_3_not_null,CHECK,null,null,null
+expenses,2200_18742_4_not_null,CHECK,null,null,null
+expenses,2200_18742_5_not_null,CHECK,null,null,null
+expenses,2200_18742_6_not_null,CHECK,null,null,null
+expenses,2200_18742_7_not_null,CHECK,null,null,null
+expenses,2200_18742_8_not_null,CHECK,null,null,null
+expenses,expenses_user_id_fkey,FOREIGN KEY,user_id,null,null
+expenses,expenses_pkey,PRIMARY KEY,id,expenses,id
+invoice_items,2200_17583_1_not_null,CHECK,null,null,null
+invoice_items,invoice_items_invoice_id_fkey,FOREIGN KEY,invoice_id,invoices,id
+invoice_items,invoice_items_pkey,PRIMARY KEY,id,invoice_items,id
+invoices,2200_17570_1_not_null,CHECK,null,null,null
+invoices,2200_17570_2_not_null,CHECK,null,null,null
+invoices,invoices_client_id_fkey,FOREIGN KEY,client_id,clients,id
+invoices,invoices_pkey,PRIMARY KEY,id,invoices,id
+profiles,2200_17540_1_not_null,CHECK,null,null,null
+profiles,profiles_pkey,PRIMARY KEY,id,profiles,id
+profiles,profiles_user_id_key,UNIQUE,user_id,profiles,user_id
+service_templates,2200_18723_1_not_null,CHECK,null,null,null
+service_templates,2200_18723_2_not_null,CHECK,null,null,null
+service_templates,2200_18723_3_not_null,CHECK,null,null,null
+service_templates,2200_18723_4_not_null,CHECK,null,null,null
+service_templates,2200_18723_5_not_null,CHECK,null,null,null
+service_templates,2200_18723_6_not_null,CHECK,null,null,null
+service_templates,2200_18723_7_not_null,CHECK,null,null,null
+service_templates,service_templates_user_id_fkey,FOREIGN KEY,user_id,null,null
+service_templates,service_templates_pkey,PRIMARY KEY,id,service_templates,id
