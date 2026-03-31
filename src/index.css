@@ -120,6 +120,14 @@ body {
   .hide-mobile { display: none !important; }
 }
 
+/* iOS Safari: force date inputs to respect explicit height */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 40px;
+  line-height: normal;
+}
+
 /* Show only on mobile (inline) */
 .show-mobile-inline { display: none; }
 @media (max-width: 767px) {

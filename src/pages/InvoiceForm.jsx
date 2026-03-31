@@ -39,11 +39,12 @@ const CRITICAL_THRESHOLD = 80_000   // red
 // ─────────────────────────────────────────────────────────────
 
 const inputBase = {
-  width: '100%', height: 40,
+  width: '100%', height: 40, minHeight: 40,
   border: '1.5px solid #ECEAE4', borderRadius: 9,
   padding: '0 12px', fontSize: 13, color: '#111110',
   background: '#fff', outline: 'none', boxSizing: 'border-box',
   transition: 'border-color .15s',
+  WebkitAppearance: 'none', appearance: 'none',
 }
 const labelBase = {
   display: 'block', fontSize: 10, fontWeight: 700,
@@ -381,7 +382,7 @@ export default function InvoiceForm({ type, edit = false }) {
                 <select
                   value={form.client_id}
                   onChange={e => setForm(p => ({ ...p, client_id: e.target.value }))}
-                  style={{ ...inputBase, paddingRight: 36, appearance: 'none', cursor: 'pointer' }}
+                  style={{ ...inputBase, paddingRight: 36, WebkitAppearance: 'none', appearance: 'none', cursor: 'pointer' }}
                   onFocus={e => e.target.style.borderColor = '#111110'}
                   onBlur={e => e.target.style.borderColor = '#ECEAE4'}
                 >

@@ -75,17 +75,19 @@ function TemplateRow({ tpl }) {
   const onKey = e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') cancel() }
 
   if (editing) return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 110px auto', gap: 8, alignItems: 'center', padding: '10px 14px', background: '#F8F7FF', borderRadius: 9, border: '1.5px solid #C7C4FF' }}>
+    <div className="template-row-grid" style={{ padding: '10px 14px', background: '#F8F7FF', borderRadius: 9, border: '1.5px solid #C7C4FF' }}>
       <input autoFocus value={draft.label}
         onChange={e => setDraft(p => ({ ...p, label: e.target.value, description: e.target.value }))}
         placeholder="Libellé" style={inp} onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey} />
       <input value={draft.description}
         onChange={e => setDraft(p => ({ ...p, description: e.target.value }))}
-        placeholder="Description" style={inp} onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey} />
+        placeholder="Description" style={inp} onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey}
+        className="tpl-description" />
       <input type="number" min="0" step="0.01" value={draft.unit_price}
         onChange={e => setDraft(p => ({ ...p, unit_price: e.target.value }))}
         placeholder="Prix HT" style={{ ...inp, ...NUM, textAlign: 'right' }}
-        onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey} />
+        onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey}
+        className="tpl-price" />
       <div style={{ display: 'flex', gap: 4 }}>
         <button type="button" onClick={commit} disabled={updateMut.isPending}
           style={iconBtn({ border: 'none', background: '#4F46E5', color: '#fff' })}>
@@ -100,15 +102,15 @@ function TemplateRow({ tpl }) {
   )
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 110px auto', gap: 8, alignItems: 'center', padding: '10px 14px', background: '#fff', borderRadius: 9, border: '1px solid #ECEAE4', transition: 'border-color .15s' }}
+    <div className="template-row-grid" style={{ padding: '10px 14px', background: '#fff', borderRadius: 9, border: '1px solid #ECEAE4', transition: 'border-color .15s' }}
       onMouseEnter={e => e.currentTarget.style.borderColor = '#C7C4FF'}
       onMouseLeave={e => e.currentTarget.style.borderColor = '#ECEAE4'}
     >
       <span style={{ fontSize: 13, fontWeight: 500, color: '#111110', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.label}</span>
-      <span style={{ fontSize: 12, color: '#9B9891', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span className="tpl-description" style={{ fontSize: 12, color: '#9B9891', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {tpl.description !== tpl.label ? tpl.description : <span style={{ color: '#D0CEC7', fontStyle: 'italic' }}>—</span>}
       </span>
-      <span style={{ ...NUM, fontSize: 13, fontWeight: 600, color: '#3D3C3A', textAlign: 'right' }}>
+      <span className="tpl-price" style={{ ...NUM, fontSize: 13, fontWeight: 600, color: '#3D3C3A', textAlign: 'right' }}>
         {formatCurrency(tpl.unit_price)}
       </span>
       <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
@@ -151,15 +153,17 @@ function AddTemplateRow() {
 
   return (
     <div style={{ marginTop: 8 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 110px auto', gap: 8, alignItems: 'flex-start', padding: '12px 14px', background: '#F8F7FF', borderRadius: 9, border: '1.5px solid #C7C4FF' }}>
+      <div className="template-row-grid" style={{ alignItems: 'flex-start', padding: '12px 14px', background: '#F8F7FF', borderRadius: 9, border: '1.5px solid #C7C4FF' }}>
         <input autoFocus value={draft.label} onChange={e => setDraft(p => ({ ...p, label: e.target.value }))}
           placeholder="Libellé *" style={inp} onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey} />
         <input value={draft.description} onChange={e => setDraft(p => ({ ...p, description: e.target.value }))}
-          placeholder="Description (optionnel)" style={inp} onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey} />
+          placeholder="Description (optionnel)" style={inp} onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey}
+          className="tpl-description" />
         <input type="number" min="0" step="0.01" value={draft.unit_price}
           onChange={e => setDraft(p => ({ ...p, unit_price: e.target.value }))}
           placeholder="Prix HT *" style={{ ...inp, ...NUM, textAlign: 'right' }}
-          onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey} />
+          onFocus={focusPurple} onBlur={blurGrey} onKeyDown={onKey}
+          className="tpl-price" />
         <div style={{ display: 'flex', gap: 4 }}>
           <button type="button" onClick={commit} disabled={createMut.isPending}
             style={{ ...iconBtn({ border: 'none', background: '#4F46E5', color: '#fff' }), height: 38 }}>
@@ -242,7 +246,7 @@ export default function Settings() {
       <form onSubmit={submit} className="space-y-5">
         <Card>
           <Card.Head title="Informations personnelles" />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="form-grid-2col">
             <Field label="Nom complet" value={form.full_name} onChange={set('full_name')} icon={User}  placeholder="Haytam Benali" wrap="col-span-2" />
             <Field label="Email" type="email" value={form.email} onChange={set('email')}  icon={Mail}  placeholder="toi@mail.com" />
             <Field label="Téléphone"   value={form.phone}     onChange={set('phone')}     icon={Phone} placeholder="06 00 00 00 00" />
@@ -251,7 +255,7 @@ export default function Settings() {
 
         <Card>
           <Card.Head title="Mon entreprise" sub="Informations fiscales et coordonnées" />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="form-grid-2col">
             <Field label="Nom de l'entreprise" value={form.company}  onChange={set('company')}  icon={Building2} placeholder="Mon Auto-Entreprise" wrap="col-span-2" />
             <Field label="Adresse"             value={form.address}  onChange={set('address')}  icon={MapPin}    placeholder="N° Rue, Quartier, Ville" wrap="col-span-2" />
             <Field label="ICE"                 value={form.ice}      onChange={set('ice')}      icon={Hash}      placeholder="000000000000000" hint="Identifiant Commun de l'Entreprise" />
@@ -260,7 +264,8 @@ export default function Settings() {
               <div className="flex gap-2">
                 {CURRENCIES.map(c => (
                   <button key={c} type="button" onClick={() => setForm(p => ({ ...p, currency: c }))}
-                    className={['px-4 h-9 rounded-md text-sm font-medium border transition-all',
+                    style={{ flex: 1 }}
+                    className={['h-9 rounded-md text-sm font-medium border transition-all',
                       form.currency === c ? 'bg-[#2563EB] text-white border-[#2563EB]'
                                           : 'bg-white border-[#E8E6E0] text-[#6B6860] hover:border-[#D0CEC7]',
                     ].join(' ')}>{c}</button>
@@ -297,7 +302,7 @@ export default function Settings() {
         {tlLoading ? <Spinner /> : (
           <>
             {templates.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 110px auto', gap: 8, padding: '0 14px', marginBottom: 8 }}>
+              <div className="template-row-grid hide-mobile" style={{ padding: '0 14px', marginBottom: 8 }}>
                 {['Libellé', 'Description', 'Prix HT', ''].map(h => (
                   <span key={h} style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#B0ADA8' }}>{h}</span>
                 ))}
