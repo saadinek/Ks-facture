@@ -304,67 +304,36 @@ export default function InvoiceDetail() {
 
         /* ── Print ── */
         @media print {
-          /* 0. Undo mobile overrides so print always renders the desktop layout */
-          .invoice-emitter-meta {
-            grid-template-columns: 1fr auto !important;
-            gap: 0 !important;
-          }
-          .invoice-emitter-meta > *:last-child {
-            text-align: right !important;
-          }
-          .invoice-emitter-meta table {
-            margin-left: auto !important;
-          }
-          .invoice-client-grid {
-            grid-template-columns: 1fr 1fr !important;
-          }
-          .invoice-items-table th,
-          .invoice-items-table td {
-            padding: 10px 12px !important;
-            font-size: 13px !important;
-          }
-          .invoice-items-table th:nth-child(3),
-          .invoice-items-table td:nth-child(3) {
-            display: table-cell !important;
-          }
-
-          /* 1. Hide all app chrome */
-          .no-print,
-          aside,
-          nav,
-          header                   { display: none !important; }
-
-          /* 2. Reset body / html completely */
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 210mm !important;
-            height: 297mm !important;
-            background: #fff !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-
-          /* 3. A4 page — zero browser margins */
+          /* 1. A4 page — zero browser margins */
           @page {
             size: 210mm 297mm portrait;
             margin: 0;
           }
 
-          /* 4. Every ancestor that could constrain width → reset */
-          body > *,
-          body > * > *,
-          body > * > * > *,
-          body > * > * > * > * {
-            all: unset !important;
-            display: block !important;
+          /* 2. Reset html/body */
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            background: #fff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
 
-          /* 5. The invoice itself fills the full A4 sheet */
+          /* 3. Hide everything — then reveal only the invoice */
+          body * {
+            visibility: hidden !important;
+          }
+          .invoice-doc,
+          .invoice-doc * {
+            visibility: visible !important;
+          }
+
+          /* 4. Position the invoice to fill the A4 sheet */
           .invoice-doc {
-            display: block !important;
             position: fixed !important;
-            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
             width: 210mm !important;
             min-height: 297mm !important;
             max-width: none !important;
@@ -378,6 +347,33 @@ export default function InvoiceDetail() {
             font-family: "DM Sans", system-ui, sans-serif !important;
             font-size: 13px !important;
             color: #1A1917 !important;
+          }
+
+          /* 5. Undo mobile layout overrides — always print as desktop */
+          .invoice-emitter-meta {
+            display: grid !important;
+            grid-template-columns: 1fr auto !important;
+            gap: 32px !important;
+          }
+          .invoice-emitter-meta > *:last-child {
+            text-align: right !important;
+          }
+          .invoice-emitter-meta table {
+            margin-left: auto !important;
+          }
+          .invoice-client-grid {
+            display: grid !important;
+            grid-template-columns: auto 1fr !important;
+          }
+          .invoice-items-table th,
+          .invoice-items-table td {
+            padding: 10px 10px !important;
+            font-size: 13px !important;
+          }
+          .invoice-items-table th:nth-child(3),
+          .invoice-items-table td:nth-child(3) {
+            display: table-cell !important;
+            visibility: visible !important;
           }
         }
       `}</style>
