@@ -242,6 +242,16 @@ input[type="date"] {
   .page-header { flex-wrap: wrap; }
 }
 
+/* ── Global @page rule — must be top-level, not inside @media print.
+   Mobile browsers (Chrome Android, Safari iOS) ignore @page when
+   nested. Placing it here ensures margin:0 removes the browser's
+   auto-printed URL, date, and page-number from exported PDFs.
+──────────────────────────────────────────────────────────── */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
 /* ── Global print rules ─────────────────────────────────────
    These run from the global stylesheet so they apply regardless
    of whether the component's <style> tag has loaded.
@@ -253,6 +263,7 @@ input[type="date"] {
     overflow: hidden !important;
   }
   body {
+    width: 100% !important;
     height: 297mm !important;
     overflow: hidden !important;
     -webkit-print-color-adjust: exact;

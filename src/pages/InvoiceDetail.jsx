@@ -269,6 +269,15 @@ export default function InvoiceDetail() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
+        /* ── @page must be top-level (not inside @media print) so that
+              mobile browsers (Chrome Android, Safari iOS) respect it.
+              margin:0 removes the browser-printed URL / date / page-number
+              headers and footers from the exported PDF. ── */
+        @page {
+          size: A4 portrait;
+          margin: 0;
+        }
+
         /* ── Screen ── */
         .invoice-doc {
           width: 100%;
@@ -304,23 +313,19 @@ export default function InvoiceDetail() {
 
         /* ── Print ── */
         @media print {
-          /* 1. A4 page — zero browser margins */
-          @page {
-            size: 210mm 297mm portrait;
-            margin: 0;
-          }
-
-          /* 2. Clamp document to exactly one A4 page.
-                overflow:hidden ensures nothing outside 297mm
-                can generate a second blank page — the main
-                cause of the mobile 2-page export bug. */
+          /* 1. Clamp document to exactly one A4 page.
+                width:100% (not 210mm) so the invoice always fills whatever
+                print area the mobile browser decides — avoids right-side
+                clipping when the browser applies its own margins.
+                overflow:hidden prevents any off-screen content from
+                generating a blank second page. */
           html {
             overflow: hidden !important;
           }
           body {
             margin: 0 !important;
             padding: 0 !important;
-            width: 210mm !important;
+            width: 100% !important;
             height: 297mm !important;
             overflow: hidden !important;
             background: #fff !important;
@@ -328,7 +333,7 @@ export default function InvoiceDetail() {
             print-color-adjust: exact;
           }
 
-          /* 3. Hide every element — then selectively reveal the invoice.
+          /* 2. Hide every element — then selectively reveal the invoice.
                 Sidebar, mobile top-bar, breadcrumb, action buttons, etc.
                 all become invisible. They still occupy flow space but are
                 clipped by body { height: 297mm; overflow: hidden } above. */
@@ -340,15 +345,15 @@ export default function InvoiceDetail() {
             visibility: visible !important;
           }
 
-          /* 4. Snap the invoice to the top-left corner of the A4 sheet.
-                position:fixed takes it out of normal flow entirely so it
-                never interacts with the hidden elements beneath it. */
+          /* 3. Snap the invoice to the top-left of the print area.
+                width:100% / max-width:100% ensure it never overflows
+                horizontally regardless of browser print margin handling. */
           .invoice-doc {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
-            width: 210mm !important;
-            max-width: 210mm !important;
+            width: 100% !important;
+            max-width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             border: none !important;
@@ -361,7 +366,7 @@ export default function InvoiceDetail() {
             color: #1A1917 !important;
           }
 
-          /* 5. Undo mobile layout overrides — always print as desktop */
+          /* 4. Undo mobile layout overrides — always print as desktop */
           .invoice-emitter-meta {
             display: grid !important;
             grid-template-columns: 1fr auto !important;
