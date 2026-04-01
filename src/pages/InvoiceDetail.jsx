@@ -221,27 +221,38 @@ export default function InvoiceDetail() {
   // On mobile, the browser lays out the page at the phone's
   // narrow viewport (≈390px) before mapping to A4.  At that
   // width content wraps and the invoice overflows to page 2.
-  // Fix: temporarily widen the viewport to 794px (A4 @ 96dpi)
-  // so everything fits in one column, then restore on close.
+  // Fix: temporarily widen the viewport to 794px (A4 @ 96dpi),
+  // then wait 300ms for the browser to reflow before opening
+  // the print dialog.  Restore viewport after dialog closes.
   const handlePrint = () => {
     const filename  = makePdfFilename(invoice)
     const prevTitle = document.title
     document.title  = filename
 
-    const viewport    = document.querySelector('meta[name="viewport"]')
+    const viewport     = document.querySelector('meta[name="viewport"]')
     const prevViewport = viewport ? viewport.getAttribute('content') : null
-    if (viewport) {
-      viewport.setAttribute('content', 'width=794')
-    }
 
-    window.print()
-
-    setTimeout(() => {
+    const restore = () => {
       document.title = prevTitle
       if (viewport && prevViewport) {
         viewport.setAttribute('content', prevViewport)
       }
-    }, 500)
+    }
+
+    if (viewport) {
+      // Widen viewport so the invoice lays out at full A4 width
+      viewport.setAttribute('content', 'width=794')
+      // Wait for the browser to reflow at the new viewport width
+      // before triggering the print dialog (otherwise the dialog
+      // captures the old narrow layout and content wraps / 2 pages).
+      setTimeout(() => {
+        window.print()
+        setTimeout(restore, 1000)
+      }, 300)
+    } else {
+      window.print()
+      setTimeout(restore, 1000)
+    }
   }
 
   // ── Derived values ────────────────────────────────────────
