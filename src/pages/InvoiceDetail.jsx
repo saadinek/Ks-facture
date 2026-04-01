@@ -217,16 +217,31 @@ export default function InvoiceDetail() {
 
   const handleEdit = () => navigate(`/factures/${invoice.id}/modifier`)
 
-  // ── Print handler — sets document.title for PDF filename ──
-  // The browser uses document.title as the default "Save as PDF" filename.
-  // We swap it before print and restore it after.
+  // ── Print handler ────────────────────────────────────────
+  // On mobile, the browser lays out the page at the phone's
+  // narrow viewport (≈390px) before mapping to A4.  At that
+  // width content wraps and the invoice overflows to page 2.
+  // Fix: temporarily widen the viewport to 794px (A4 @ 96dpi)
+  // so everything fits in one column, then restore on close.
   const handlePrint = () => {
-    const filename    = makePdfFilename(invoice)
-    const prevTitle   = document.title
-    document.title    = filename
+    const filename  = makePdfFilename(invoice)
+    const prevTitle = document.title
+    document.title  = filename
+
+    const viewport    = document.querySelector('meta[name="viewport"]')
+    const prevViewport = viewport ? viewport.getAttribute('content') : null
+    if (viewport) {
+      viewport.setAttribute('content', 'width=794')
+    }
+
     window.print()
-    // Restore after a tick so it doesn't affect ongoing render
-    setTimeout(() => { document.title = prevTitle }, 500)
+
+    setTimeout(() => {
+      document.title = prevTitle
+      if (viewport && prevViewport) {
+        viewport.setAttribute('content', prevViewport)
+      }
+    }, 500)
   }
 
   // ── Derived values ────────────────────────────────────────
