@@ -242,3 +242,41 @@ input[type="date"] {
   .page-header { flex-wrap: wrap; }
 }
 
+/* ── Global print rules ─────────────────────────────────────
+   These run from the global stylesheet so they apply regardless
+   of whether the component's <style> tag has loaded.
+   They back up the component-level @media print block.
+──────────────────────────────────────────────────────────── */
+@media print {
+  /* Clamp document to one A4 page */
+  html {
+    overflow: hidden !important;
+  }
+  body {
+    height: 297mm !important;
+    overflow: hidden !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide all app chrome unconditionally */
+  aside,
+  nav,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Mobile top-bar (hamburger) inside main — it has no semantic tag,
+     so target it by the Tailwind class md:hidden uses at print time */
+  [class*="md:hidden"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Suppress animations and transitions */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

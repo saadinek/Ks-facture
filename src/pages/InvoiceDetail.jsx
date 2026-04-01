@@ -310,17 +310,28 @@ export default function InvoiceDetail() {
             margin: 0;
           }
 
-          /* 2. Reset html/body */
-          html, body {
+          /* 2. Clamp document to exactly one A4 page.
+                overflow:hidden ensures nothing outside 297mm
+                can generate a second blank page — the main
+                cause of the mobile 2-page export bug. */
+          html {
+            overflow: hidden !important;
+          }
+          body {
             margin: 0 !important;
             padding: 0 !important;
             width: 210mm !important;
+            height: 297mm !important;
+            overflow: hidden !important;
             background: #fff !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
 
-          /* 3. Hide everything — then reveal only the invoice */
+          /* 3. Hide every element — then selectively reveal the invoice.
+                Sidebar, mobile top-bar, breadcrumb, action buttons, etc.
+                all become invisible. They still occupy flow space but are
+                clipped by body { height: 297mm; overflow: hidden } above. */
           body * {
             visibility: hidden !important;
           }
@@ -329,14 +340,15 @@ export default function InvoiceDetail() {
             visibility: visible !important;
           }
 
-          /* 4. Position the invoice to fill the A4 sheet */
+          /* 4. Snap the invoice to the top-left corner of the A4 sheet.
+                position:fixed takes it out of normal flow entirely so it
+                never interacts with the hidden elements beneath it. */
           .invoice-doc {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             width: 210mm !important;
-            min-height: 297mm !important;
-            max-width: none !important;
+            max-width: 210mm !important;
             margin: 0 !important;
             padding: 0 !important;
             border: none !important;
