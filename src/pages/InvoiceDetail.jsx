@@ -304,6 +304,30 @@ export default function InvoiceDetail() {
 
         /* ── Print ── */
         @media print {
+          /* 0. Undo mobile overrides so print always renders the desktop layout */
+          .invoice-emitter-meta {
+            grid-template-columns: 1fr auto !important;
+            gap: 0 !important;
+          }
+          .invoice-emitter-meta > *:last-child {
+            text-align: right !important;
+          }
+          .invoice-emitter-meta table {
+            margin-left: auto !important;
+          }
+          .invoice-client-grid {
+            grid-template-columns: 1fr 1fr !important;
+          }
+          .invoice-items-table th,
+          .invoice-items-table td {
+            padding: 10px 12px !important;
+            font-size: 13px !important;
+          }
+          .invoice-items-table th:nth-child(3),
+          .invoice-items-table td:nth-child(3) {
+            display: table-cell !important;
+          }
+
           /* 1. Hide all app chrome */
           .no-print,
           aside,
