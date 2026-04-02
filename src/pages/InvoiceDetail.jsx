@@ -2,8 +2,9 @@
 //   ../hooks/useData.js
 //   ../utils/utils.js
 
+import { useState }                      from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Edit, Send, CheckCircle, Trash2, Printer } from 'lucide-react'
+import { ArrowLeft, Edit, Send, CheckCircle, Trash2, Download } from 'lucide-react'
 import { useDeleteInvoice, useInvoice, useUpdateStatus } from '../hooks/useData.js'
 import { formatCurrency, formatDate }                    from '../utils/utils.js'
 
@@ -206,34 +207,57 @@ export default function InvoiceDetail() {
 
   const handleEdit = () => navigate(`/factures/${invoice.id}/modifier`)
 
-  const handlePrint = () => {
-    const filename  = makePdfFilename(invoice)
-    const prevTitle = document.title
-    document.title  = filename
+  const [exporting, setExporting] = useState(false)
 
-    // On iOS (iPhone/iPad), the print engine uses the screen viewport as its
-    // render width — setting width=210mm in CSS is ignored.  Widening the
-    // viewport to 794px (A4 @ 96 dpi) before print() forces iOS to render
-    // the invoice at full A4 width and then scale it onto the paper, which
-    // eliminates right-side clipping.  We restore the viewport afterwards.
-    const viewportMeta = document.querySelector('meta[name="viewport"]')
-    const prevViewport = viewportMeta ? viewportMeta.content : null
-    const isMobile     = window.innerWidth < 900
+  const handleExportPDF = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      const { default: html2canvas } = await import('html2canvas')
+      const { jsPDF }                = await import('jspdf')
 
-    const restore = () => {
-      document.title = prevTitle
-      if (isMobile && viewportMeta && prevViewport !== null) {
-        viewportMeta.content = prevViewport
+      const el = document.getElementById('invoice-print-target')
+      if (!el) throw new Error('Invoice element not found')
+
+      // Render the hidden print element at A4 pixel width (794px @ 96dpi).
+      // scale:2 gives retina-quality rasterisation on all screens.
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        windowWidth: 794,
+        logging: false,
+      })
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.92)
+
+      // A4 in mm: 210 × 297.  We fit the image to full page width,
+      // height proportional — no scaling, no clipping.
+      const pdf       = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+      const pageW     = pdf.internal.pageSize.getWidth()   // 210
+      const pageH     = pdf.internal.pageSize.getHeight()  // 297
+      const imgAspect = canvas.height / canvas.width
+      const imgH      = pageW * imgAspect
+
+      if (imgH <= pageH) {
+        // Fits on one page — center vertically with a small top margin
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, imgH)
+      } else {
+        // Taller than one page: scale down to fit height
+        const scale = pageH / imgH
+        const fitW  = pageW * scale
+        const fitH  = pageH
+        const xOff  = (pageW - fitW) / 2
+        pdf.addImage(imgData, 'JPEG', xOff, 0, fitW, fitH)
       }
-    }
 
-    if (isMobile && viewportMeta) {
-      viewportMeta.content = 'width=794, initial-scale=1, shrink-to-fit=no'
-      // Wait for the browser to reflow at the new viewport before printing
-      setTimeout(() => { window.print(); setTimeout(restore, 1000) }, 400)
-    } else {
-      window.print()
-      setTimeout(restore, 500)
+      pdf.save(`${makePdfFilename(invoice)}.pdf`)
+    } catch (err) {
+      console.error('PDF export failed:', err)
+      alert('Erreur lors de la génération du PDF. Veuillez réessayer.')
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -548,24 +572,8 @@ export default function InvoiceDetail() {
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      {/* ── Styles ─────────────────────────────────────────────
-          Two wrappers:
-            .invoice-doc  — screen only (responsive, mobile-adaptive)
-            .invoice-print — print/PDF only (always A4 desktop layout)
-
-          Mobile CSS is scoped under ".invoice-doc" so it never
-          affects .invoice-print. Print CSS only targets .invoice-print,
-          so zero mobile-override "undo" work is needed.
-      ─────────────────────────────────────────────────────── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
-        /* @page at top level so mobile browsers (Chrome Android,
-           Safari iOS) respect it. margin:0 removes browser headers/footers. */
-        @page {
-          size: A4 portrait;
-          margin: 0;
-        }
 
         /* ── Screen wrapper — responsive ── */
         .invoice-doc {
@@ -579,11 +587,6 @@ export default function InvoiceDetail() {
           font-family: "DM Sans", system-ui, sans-serif;
           font-size: 13px;
           color: #1A1917;
-        }
-
-        /* ── Print wrapper — always hidden on screen ── */
-        .invoice-print {
-          display: none;
         }
 
         /* ── Mobile: only affects .invoice-doc (scoped) ── */
@@ -669,142 +672,6 @@ export default function InvoiceDetail() {
           }
         }
 
-        /* ── Print: show .invoice-print as a full-page layout ──
-           Strategy: we widen the viewport to 794px via JS before
-           window.print() on mobile, so "width: 100%" here = A4 width.
-           On desktop the viewport is already wide enough.
-           position: absolute (not fixed) works more reliably on iOS WebKit.
-        ── */
-        @media print {
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-            background: #fff !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          /* Hide everything, then reveal only the print wrapper */
-          body * {
-            visibility: hidden !important;
-          }
-          .invoice-print,
-          .invoice-print * {
-            visibility: visible !important;
-          }
-
-          /* .invoice-doc stays hidden during print */
-          .invoice-doc {
-            display: none !important;
-          }
-
-          /* .invoice-print fills the full print viewport.
-             On desktop that is ~794px (A4).
-             On iOS we forced the viewport to 794px in JS before print(),
-             so this also ends up at A4 width with no clipping. */
-          .invoice-print {
-            display: block !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-            background: #fff !important;
-            font-family: "DM Sans", system-ui, sans-serif !important;
-            /* Slightly tighter base font recovers height from every text row */
-            font-size: 12px !important;
-            color: #1A1917 !important;
-            overflow: hidden !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          /* ── Compact vertical spacing for one-page fit ──────────
-             At 78% browser scale the invoice fits → content is ~28%
-             taller than A4 (exacerbated by the iOS browser URL/footer
-             strip eating ~50px from the printable area).
-             Target: recover ~160px of vertical space through tighter
-             section padding/margins while keeping all content visible.
-             Horizontal padding is untouched — no width/layout changes.
-          ─────────────────────────────────────────────────────── */
-
-          /* 1. Header stripe: reduce vertical pad + shrink FACTURE label */
-          .invoice-print .inv-header {
-            padding-top: 10px !important;
-            padding-bottom: 10px !important;
-          }
-          .invoice-print .inv-header > span {
-            font-size: 26px !important;
-            line-height: 1 !important;
-          }
-
-          /* 2. Emitter / meta row */
-          .invoice-print .inv-emitter {
-            padding-top: 13px !important;
-            padding-bottom: 11px !important;
-          }
-          .invoice-print .inv-emitter p {
-            margin-bottom: 3px !important;
-          }
-
-          /* 3. Client block */
-          .invoice-print .inv-client {
-            margin-top: 10px !important;
-            margin-bottom: 10px !important;
-            padding-top: 8px !important;
-            padding-bottom: 8px !important;
-          }
-          .invoice-print .inv-client-grid {
-            row-gap: 1px !important;
-          }
-          .invoice-print .inv-client-grid > p:first-child {
-            margin-bottom: 3px !important;
-          }
-
-          /* 4. Line items: tighter rows */
-          .invoice-print .inv-items-table th {
-            padding-top: 7px !important;
-            padding-bottom: 7px !important;
-          }
-          .invoice-print .inv-items-table td {
-            padding-top: 7px !important;
-            padding-bottom: 7px !important;
-          }
-
-          /* 5. Totals block */
-          .invoice-print .inv-totals-wrap {
-            padding-top: 6px !important;
-            padding-bottom: 12px !important;
-          }
-          .invoice-print .inv-totals-inner > div {
-            padding-top: 4px !important;
-            padding-bottom: 4px !important;
-          }
-
-          /* 6. Amount in words */
-          .invoice-print .inv-amount-words {
-            margin-bottom: 8px !important;
-            padding-top: 7px !important;
-            padding-bottom: 7px !important;
-          }
-
-          /* 7. Notes (when present) */
-          .invoice-print .inv-notes {
-            margin-bottom: 8px !important;
-          }
-
-          /* 8. Footer */
-          .invoice-print .inv-footer {
-            padding-top: 10px !important;
-            padding-bottom: 14px !important;
-            margin-top: 2px !important;
-          }
-        }
       `}</style>
 
       {/* ── Breadcrumb ── */}
@@ -832,7 +699,7 @@ export default function InvoiceDetail() {
           <ActionBtn onClick={handleMarkSent} icon={Send}        variant="default" disabled={updateStatus.isPending}>Marquer envoyée</ActionBtn>
           <ActionBtn onClick={handleMarkPaid} icon={CheckCircle} variant="primary" disabled={updateStatus.isPending}>Marquer payée</ActionBtn>
           <span style={{ width: 1, height: 22, background: '#ECEAE4', margin: '0 2px' }} />
-          <ActionBtn onClick={handlePrint}    icon={Printer}     variant="default">Imprimer / PDF</ActionBtn>
+          <ActionBtn onClick={handleExportPDF} icon={Download}    variant="default" disabled={exporting}>{exporting ? 'Export…' : 'Exporter PDF'}</ActionBtn>
           <ActionBtn onClick={handleDelete}   icon={Trash2}      variant="danger"  disabled={deleteInvoice.isPending}>Supprimer</ActionBtn>
         </div>
       </div>
@@ -842,8 +709,22 @@ export default function InvoiceDetail() {
         {invoiceBody}
       </div>
 
-      {/* ── Print/PDF layout (dedicated, always A4 desktop) ── */}
-      <div className="invoice-print">
+      {/* ── PDF capture target — visually hidden, always rendered at 794px ── */}
+      <div
+        id="invoice-print-target"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: '-9999px',
+          width: 794,
+          background: '#fff',
+          fontFamily: '"DM Sans", system-ui, sans-serif',
+          fontSize: 13,
+          color: '#1A1917',
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+      >
         {invoiceBody}
       </div>
 
