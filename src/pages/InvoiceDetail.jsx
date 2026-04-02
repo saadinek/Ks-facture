@@ -152,6 +152,7 @@ export default function InvoiceDetail() {
   const { data: invoice, isLoading, error } = useInvoice(id)
   const deleteInvoice = useDeleteInvoice()
   const updateStatus  = useUpdateStatus()
+  const [exporting, setExporting] = useState(false)
 
   // ── Loading / error / not-found — unchanged ────────────────
 
@@ -206,8 +207,6 @@ export default function InvoiceDetail() {
   }
 
   const handleEdit = () => navigate(`/factures/${invoice.id}/modifier`)
-
-  const [exporting, setExporting] = useState(false)
 
   const handleExportPDF = async () => {
     if (exporting) return
