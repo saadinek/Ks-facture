@@ -716,11 +716,93 @@ export default function InvoiceDetail() {
             box-shadow: none !important;
             background: #fff !important;
             font-family: "DM Sans", system-ui, sans-serif !important;
-            font-size: 13px !important;
+            /* Slightly tighter base font recovers height from every text row */
+            font-size: 12px !important;
             color: #1A1917 !important;
             overflow: hidden !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+          }
+
+          /* ── Compact vertical spacing for one-page fit ──────────
+             At 78% browser scale the invoice fits → content is ~28%
+             taller than A4 (exacerbated by the iOS browser URL/footer
+             strip eating ~50px from the printable area).
+             Target: recover ~160px of vertical space through tighter
+             section padding/margins while keeping all content visible.
+             Horizontal padding is untouched — no width/layout changes.
+          ─────────────────────────────────────────────────────── */
+
+          /* 1. Header stripe: reduce vertical pad + shrink FACTURE label */
+          .invoice-print .inv-header {
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
+          }
+          .invoice-print .inv-header > span {
+            font-size: 26px !important;
+            line-height: 1 !important;
+          }
+
+          /* 2. Emitter / meta row */
+          .invoice-print .inv-emitter {
+            padding-top: 13px !important;
+            padding-bottom: 11px !important;
+          }
+          .invoice-print .inv-emitter p {
+            margin-bottom: 3px !important;
+          }
+
+          /* 3. Client block */
+          .invoice-print .inv-client {
+            margin-top: 10px !important;
+            margin-bottom: 10px !important;
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+          }
+          .invoice-print .inv-client-grid {
+            row-gap: 1px !important;
+          }
+          .invoice-print .inv-client-grid > p:first-child {
+            margin-bottom: 3px !important;
+          }
+
+          /* 4. Line items: tighter rows */
+          .invoice-print .inv-items-table th {
+            padding-top: 7px !important;
+            padding-bottom: 7px !important;
+          }
+          .invoice-print .inv-items-table td {
+            padding-top: 7px !important;
+            padding-bottom: 7px !important;
+          }
+
+          /* 5. Totals block */
+          .invoice-print .inv-totals-wrap {
+            padding-top: 6px !important;
+            padding-bottom: 12px !important;
+          }
+          .invoice-print .inv-totals-inner > div {
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+          }
+
+          /* 6. Amount in words */
+          .invoice-print .inv-amount-words {
+            margin-bottom: 8px !important;
+            padding-top: 7px !important;
+            padding-bottom: 7px !important;
+          }
+
+          /* 7. Notes (when present) */
+          .invoice-print .inv-notes {
+            margin-bottom: 8px !important;
+          }
+
+          /* 8. Footer */
+          .invoice-print .inv-footer {
+            padding-top: 10px !important;
+            padding-bottom: 14px !important;
+            margin-top: 2px !important;
           }
         }
       `}</style>
