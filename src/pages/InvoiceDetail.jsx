@@ -246,7 +246,7 @@ export default function InvoiceDetail() {
   const G = '36px'
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* ── Styles ─────────────────────────────────────────────
           Screen : flat white sheet, full-width within content area.
@@ -282,32 +282,47 @@ export default function InvoiceDetail() {
           width: 100%;
           max-width: 860px;
           margin: 0 auto;
+          box-sizing: border-box;
+          overflow-x: hidden;
         }
 
         /* ── Mobile invoice adjustments ── */
         @media (max-width: 767px) {
-          .invoice-emitter-meta {
-            grid-template-columns: 1fr !important;
-            gap: 16px !important;
-          }
-          .invoice-emitter-meta > *:last-child {
-            text-align: left !important;
-          }
-          .invoice-emitter-meta table {
-            margin-left: 0 !important;
-          }
-          .invoice-client-grid {
-            grid-template-columns: 1fr !important;
-          }
+          /* Reduce all section paddings/margins to fit phone width */
+          .invoice-header-stripe  { padding: 12px 16px !important; }
+          .invoice-emitter-meta   { padding: 16px 16px 14px !important; grid-template-columns: 1fr !important; gap: 14px !important; }
+          .invoice-client-block   { margin: 10px 16px 14px !important; }
+          .invoice-items-wrap     { padding: 0 10px !important; }
+          .invoice-totals-wrap    { padding: 8px 16px 14px !important; }
+          .invoice-totals-inner   { min-width: unset !important; width: 100% !important; }
+          .invoice-amount-words   { margin: 0 16px 12px !important; }
+          .invoice-notes-wrap     { margin: 0 16px 12px !important; }
+          .invoice-footer         { padding: 14px 16px 22px !important; flex-direction: column !important; gap: 14px !important; align-items: flex-start !important; }
+
+          /* Emitter meta: table becomes left-aligned on mobile */
+          .invoice-emitter-meta > *:last-child { text-align: left !important; }
+          .invoice-emitter-meta table { margin-left: 0 !important; text-align: left !important; }
+          .invoice-emitter-meta table td { text-align: left !important; white-space: normal !important; }
+          .invoice-emitter-meta table td:first-child { padding-right: 8px !important; }
+
+          /* Client grid: single column */
+          .invoice-client-grid { grid-template-columns: 1fr !important; }
+
+          /* Table: tighter cells, hide unit price column */
+          .invoice-items-table { table-layout: fixed !important; width: 100% !important; }
           .invoice-items-table th,
-          .invoice-items-table td {
-            padding: 8px 8px !important;
-            font-size: 12px !important;
-          }
+          .invoice-items-table td { padding: 7px 6px !important; font-size: 11px !important; }
+          .invoice-items-table th:nth-child(1),
+          .invoice-items-table td:nth-child(1) { width: 32px !important; }
           .invoice-items-table th:nth-child(3),
-          .invoice-items-table td:nth-child(3) {
-            display: none !important;
-          }
+          .invoice-items-table td:nth-child(3) { display: none !important; }
+          .invoice-items-table th:nth-child(4),
+          .invoice-items-table td:nth-child(4) { width: 80px !important; }
+
+          /* Footer signature: left-align on mobile */
+          .invoice-signature { text-align: left !important; }
+          .invoice-signature > div:first-child { margin-left: 0 !important; }
+          .invoice-footer-thankyou { font-size: 9.5px !important; }
         }
 
         /* ── Print ── */
@@ -363,31 +378,44 @@ export default function InvoiceDetail() {
           }
 
           /* 4. Undo mobile layout overrides — always print as desktop */
+          .invoice-header-stripe  { padding: 16px 36px !important; }
           .invoice-emitter-meta {
             display: grid !important;
             grid-template-columns: 1fr auto !important;
             gap: 32px !important;
+            padding: 22px 36px 18px !important;
           }
-          .invoice-emitter-meta > *:last-child {
-            text-align: right !important;
-          }
-          .invoice-emitter-meta table {
-            margin-left: auto !important;
-          }
+          .invoice-emitter-meta > *:last-child { text-align: right !important; }
+          .invoice-emitter-meta table { margin-left: auto !important; text-align: right !important; }
+          .invoice-emitter-meta table td { text-align: right !important; white-space: nowrap !important; }
+          .invoice-client-block { margin: 16px 36px 18px !important; }
           .invoice-client-grid {
             display: grid !important;
             grid-template-columns: auto 1fr !important;
           }
+          .invoice-items-wrap { padding: 0 36px !important; }
+          .invoice-items-table { table-layout: auto !important; }
           .invoice-items-table th,
-          .invoice-items-table td {
-            padding: 10px 10px !important;
-            font-size: 13px !important;
-          }
+          .invoice-items-table td { padding: 10px 10px !important; font-size: 13px !important; }
+          .invoice-items-table th:nth-child(1),
+          .invoice-items-table td:nth-child(1) { width: 52px !important; }
           .invoice-items-table th:nth-child(3),
           .invoice-items-table td:nth-child(3) {
             display: table-cell !important;
             visibility: visible !important;
           }
+          .invoice-totals-wrap  { padding: 10px 36px 18px !important; }
+          .invoice-totals-inner { min-width: 260px !important; width: auto !important; }
+          .invoice-amount-words { margin: 0 36px 16px !important; }
+          .invoice-notes-wrap   { margin: 0 36px 16px !important; }
+          .invoice-footer {
+            padding: 16px 36px 28px !important;
+            flex-direction: row !important;
+            gap: 0 !important;
+            align-items: flex-end !important;
+          }
+          .invoice-signature { text-align: right !important; }
+          .invoice-signature > div:first-child { margin-left: auto !important; }
         }
       `}</style>
 
@@ -440,7 +468,7 @@ export default function InvoiceDetail() {
       >
 
         {/* ── 1. Header stripe ─────────────────────────────── */}
-        <div style={{
+        <div className="invoice-header-stripe" style={{
           background: ACCENT,
           padding: `16px ${G}`,
           display: 'flex',
@@ -531,7 +559,7 @@ export default function InvoiceDetail() {
         </div>
 
         {/* ── 3. Client block — left-border accent, no background box ── */}
-        <div style={{
+        <div className="invoice-client-block" style={{
           margin: `16px ${G} 18px`,
           padding: '12px 16px',
           borderLeft: `3px solid ${ACCENT}`,
@@ -583,7 +611,7 @@ export default function InvoiceDetail() {
         </div>
 
         {/* ── 4. Line items table ───────────────────────────── */}
-        <div style={{ padding: `0 ${G}` }}>
+        <div className="invoice-items-wrap" style={{ padding: `0 ${G}` }}>
           <table className="invoice-items-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: ACCENT }}>
@@ -641,8 +669,8 @@ export default function InvoiceDetail() {
         </div>
 
         {/* ── 5. Totals block ───────────────────────────────── */}
-        <div style={{ padding: `10px ${G} 18px`, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ minWidth: 260 }}>
+        <div className="invoice-totals-wrap" style={{ padding: `10px ${G} 18px`, display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="invoice-totals-inner" style={{ minWidth: 260 }}>
 
             {/* Sous-total row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderTop: '1px solid #ECEAE4' }}>
@@ -674,7 +702,7 @@ export default function InvoiceDetail() {
         </div>
 
         {/* ── 6. Amount in words ────────────────────────────── */}
-        <div style={{
+        <div className="invoice-amount-words" style={{
           margin: `0 ${G} 16px`,
           padding: '10px 14px',
           background: '#F8F6F2',
@@ -693,7 +721,7 @@ export default function InvoiceDetail() {
 
         {/* ── Notes ─────────────────────────────────────────── */}
         {invoice.notes && (
-          <div style={{ margin: `0 ${G} 16px` }}>
+          <div className="invoice-notes-wrap" style={{ margin: `0 ${G} 16px` }}>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9B9891', marginBottom: 4 }}>
               Notes
             </p>
@@ -704,7 +732,7 @@ export default function InvoiceDetail() {
         )}
 
         {/* ── 7. Footer: thank-you + signature ─────────────── */}
-        <div style={{
+        <div className="invoice-footer" style={{
           padding: `16px ${G} 28px`,
           borderTop: '1px solid #ECEAE4',
           display: 'flex',
@@ -713,7 +741,7 @@ export default function InvoiceDetail() {
           marginTop: 4,
         }}>
           {/* Thank-you */}
-          <p style={{
+          <p className="invoice-footer-thankyou" style={{
             fontSize: 11, color: ACCENT, fontWeight: 700,
             letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0,
           }}>
@@ -721,7 +749,7 @@ export default function InvoiceDetail() {
           </p>
 
           {/* Signature */}
-          <div style={{ textAlign: 'right' }}>
+          <div className="invoice-signature" style={{ textAlign: 'right' }}>
             <div style={{
               width: 160, height: 44,
               borderBottom: '1.5px solid #3D3C3A',
