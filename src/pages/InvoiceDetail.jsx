@@ -124,17 +124,6 @@ function amountInWords(total) {
 }
 
 // ── PDF filename generator ────────────────────────────────────
-// Controls the suggested filename when user picks "Save as PDF"
-// in the browser print dialog (via document.title trick).
-//
-// Format : Facture_CLIENTNAME_DATE.pdf
-// Example: Facture_CLINIQUE_AL_MADINA_2026-03-30.pdf
-//
-// Rules:
-//   - prefer client.name, fall back to client.company, then "Client"
-//   - prefer issue_date, fall back to invoice_date
-//   - spaces → underscores
-//   - strip invalid filename chars: / \ : * ? " < > |
 
 function makePdfFilename(invoice) {
   const rawName  = invoice.clients?.name || invoice.clients?.company || 'Client'
@@ -142,12 +131,12 @@ function makePdfFilename(invoice) {
 
   const safeName = rawName
     .trim()
-    .replace(/[/\\:*?"<>|]/g, '')   // strip invalid chars
-    .replace(/\s+/g, '_')            // spaces → underscores
-    .replace(/_+/g, '_')             // collapse multiple underscores
+    .replace(/[/\\:*?"<>|]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
     .toUpperCase()
 
-  const safeDate = rawDate.slice(0, 10)   // keep YYYY-MM-DD portion only
+  const safeDate = rawDate.slice(0, 10)
 
   return `Facture_${safeName}_${safeDate}`
 }
@@ -217,9 +206,6 @@ export default function InvoiceDetail() {
 
   const handleEdit = () => navigate(`/factures/${invoice.id}/modifier`)
 
-  // ── Print handler — sets document.title for PDF filename ──
-  // The browser uses document.title as the default "Save as PDF" filename.
-  // We swap it before print and restore it after.
   const handlePrint = () => {
     const filename  = makePdfFilename(invoice)
     const prevTitle = document.title
@@ -242,94 +228,426 @@ export default function InvoiceDetail() {
   const totalWords = amountInWords(total)
 
   const ACCENT = '#E8872A'
-  // Internal horizontal gutter used consistently throughout
+  // Desktop gutter — used by both screen (.invoice-doc) and print (.invoice-print)
   const G = '36px'
+
+  // ── Invoice body — shared between screen and print wrappers ──
+  // Stored as a JSX variable to avoid duplicating markup.
+  // Screen (.invoice-doc) has mobile CSS scoped under it.
+  // Print (.invoice-print) is never touched by mobile CSS → always renders as desktop.
+  const invoiceBody = (
+    <>
+      {/* ── 1. Header stripe ─────────────────────────────── */}
+      <div className="inv-header" style={{
+        background: ACCENT,
+        padding: `16px ${G}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+      }}>
+        <span style={{
+          fontSize: 34, fontWeight: 800, color: '#fff',
+          letterSpacing: '0.1em', textTransform: 'uppercase',
+        }}>
+          {docLabel}
+        </span>
+      </div>
+
+      {/* ── 2. Emitter (left) + Invoice meta (right) ─────── */}
+      <div
+        className="inv-emitter"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto',
+          gap: 32,
+          padding: `22px ${G} 18px`,
+          borderBottom: '1.5px solid #ECEAE4',
+          alignItems: 'start',
+        }}
+      >
+        {/* Left — business info */}
+        <div>
+          <p style={{
+            fontWeight: 800, fontSize: 14, color: '#111110',
+            margin: '0 0 6px', letterSpacing: '0.01em',
+            textTransform: 'uppercase',
+          }}>
+            SAAD EDDINE KARIM
+          </p>
+          <p style={{
+            margin: '0 0 6px', fontSize: 11, color: '#6B6860',
+            display: 'flex', alignItems: 'baseline', gap: 6,
+          }}>
+            <span style={{ fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 10, color: '#9B9891' }}>ICE</span>
+            <span style={{ ...NUM, fontSize: 12, color: '#3D3C3A', fontWeight: 600 }}>003620072000106</span>
+          </p>
+          <p style={{ margin: '0 0 1px', fontSize: 11.5, color: '#6B6860', lineHeight: 1.6 }}>
+            PALM ZENATA IMMEUBLE B NR 36 ZENATA CASABLANCA
+          </p>
+          <p style={{ margin: '4px 0 0', fontSize: 11.5, color: '#6B6860', display: 'flex', gap: 14 }}>
+            <span>06 61 94 90 01</span>
+            <span style={{ color: ACCENT }}>saadinek@gmail.com</span>
+          </p>
+        </div>
+
+        {/* Right — invoice meta table */}
+        <div>
+          <table style={{ borderCollapse: 'collapse', textAlign: 'right' }}>
+            <tbody>
+              {[
+                { label: 'N° de facture',   value: invoice.number || invoice.invoice_number || '—', bold: true },
+                { label: "Date d'émission", value: formatDate(invoice.issue_date || invoice.invoice_date) },
+                ...(invoice.due_date ? [{ label: "Date d'échéance", value: formatDate(invoice.due_date) }] : []),
+              ].map(({ label, value, bold }) => (
+                <tr key={label}>
+                  <td style={{
+                    fontSize: 11, color: '#9B9891', fontWeight: 500,
+                    paddingRight: 12, paddingBottom: 5,
+                    textAlign: 'right', whiteSpace: 'nowrap',
+                    letterSpacing: '0.02em',
+                  }}>
+                    {label}
+                  </td>
+                  <td style={{
+                    paddingBottom: 5,
+                    ...NUM, fontSize: 13,
+                    fontWeight: bold ? 700 : 600,
+                    color: bold ? '#111110' : '#3D3C3A',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {value}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── 3. Client block ───────────────────────────────── */}
+      <div className="inv-client" style={{
+        margin: `16px ${G} 18px`,
+        padding: '12px 16px',
+        borderLeft: `3px solid ${ACCENT}`,
+        background: '#FAFAF8',
+      }}>
+        <p style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+          textTransform: 'uppercase', color: '#9B9891', margin: '0 0 6px',
+        }}>
+          Facturé à
+        </p>
+        {client ? (
+          <div className="inv-client-grid" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 32, rowGap: 2 }}>
+            <p style={{ fontWeight: 700, fontSize: 14, color: '#111110', margin: 0, gridColumn: '1 / -1', marginBottom: 5 }}>
+              {client.name || client.company || '—'}
+            </p>
+            {client.company && client.name && (
+              <>
+                <span style={{ fontSize: 11, color: '#9B9891', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Société</span>
+                <span style={{ fontSize: 12, color: '#3D3C3A' }}>{client.company}</span>
+              </>
+            )}
+            {client.ice && (
+              <>
+                <span style={{ fontSize: 11, color: '#9B9891', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>ICE</span>
+                <span style={{ ...NUM, fontSize: 12, color: '#3D3C3A' }}>{client.ice}</span>
+              </>
+            )}
+            {client.address && (
+              <>
+                <span style={{ fontSize: 11, color: '#9B9891', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Adresse</span>
+                <span style={{ fontSize: 12, color: '#3D3C3A' }}>{client.address}</span>
+              </>
+            )}
+            {client.email && (
+              <>
+                <span style={{ fontSize: 11, color: '#9B9891', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Email</span>
+                <span style={{ fontSize: 12, color: '#3D3C3A' }}>{client.email}</span>
+              </>
+            )}
+          </div>
+        ) : (
+          <p style={{ fontSize: 12, color: '#B0ADA8', fontStyle: 'italic', margin: 0 }}>
+            Aucun client associé
+          </p>
+        )}
+      </div>
+
+      {/* ── 4. Line items table ───────────────────────────── */}
+      <div className="inv-items-wrap" style={{ padding: `0 ${G}` }}>
+        <table className="inv-items-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: ACCENT }}>
+              {[
+                { label: 'Qté',           align: 'center', w: '52px'  },
+                { label: 'Description',   align: 'left',   w: 'auto'  },
+                { label: 'Prix unit. HT', align: 'right',  w: '110px' },
+                { label: 'Total HT',      align: 'right',  w: '110px' },
+              ].map(col => (
+                <th key={col.label} style={{
+                  padding: '9px 10px',
+                  fontSize: 10, fontWeight: 700,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                  color: '#fff', textAlign: col.align,
+                  width: col.w, border: 'none',
+                }}>
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan={4} style={{
+                  padding: '18px 10px', textAlign: 'center',
+                  fontSize: 12, color: '#B0ADA8', fontStyle: 'italic',
+                  borderBottom: '1px solid #ECEAE4',
+                }}>
+                  Aucune ligne.
+                </td>
+              </tr>
+            ) : items.map((item, idx) => {
+              const lineTotal = Number(item.quantity) * Number(item.unit_price)
+              const isOdd     = idx % 2 === 1
+              return (
+                <tr key={item.id ?? idx} style={{ background: isOdd ? '#FDF9F5' : '#fff' }}>
+                  <td style={{ padding: '10px 10px', textAlign: 'center', borderBottom: '1px solid #F0EEE9', ...NUM, fontSize: 13, color: '#3D3C3A' }}>
+                    {item.quantity}
+                  </td>
+                  <td style={{ padding: '10px 10px', borderBottom: '1px solid #F0EEE9', fontSize: 12.5, color: '#111110', lineHeight: 1.55 }}>
+                    {item.description}
+                  </td>
+                  <td style={{ padding: '10px 10px', textAlign: 'right', borderBottom: '1px solid #F0EEE9', ...NUM, fontSize: 13, color: '#555250' }}>
+                    {formatCurrency(item.unit_price)}
+                  </td>
+                  <td style={{ padding: '10px 10px', textAlign: 'right', borderBottom: '1px solid #F0EEE9', ...NUM, fontSize: 13, fontWeight: 600, color: '#111110' }}>
+                    {formatCurrency(lineTotal)}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── 5. Totals block ───────────────────────────────── */}
+      <div className="inv-totals-wrap" style={{ padding: `10px ${G} 18px`, display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="inv-totals-inner" style={{ minWidth: 260 }}>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderTop: '1px solid #ECEAE4' }}>
+            <span style={{ fontSize: 12, color: '#6B6860' }}>Sous-total HT</span>
+            <span style={{ ...NUM, fontSize: 13, color: '#3D3C3A' }}>{formatCurrency(subtotal)}</span>
+          </div>
+
+          {taxRate > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderTop: '1px solid #F5F4F1' }}>
+              <span style={{ fontSize: 12, color: '#6B6860' }}>TVA ({taxRate}%)</span>
+              <span style={{ ...NUM, fontSize: 13, color: '#3D3C3A' }}>{formatCurrency(taxAmount)}</span>
+            </div>
+          )}
+
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: ACCENT, padding: '10px 14px', marginTop: 6,
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Total TTC
+            </span>
+            <span style={{ ...NUM, fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
+              {formatCurrency(total)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 6. Amount in words ────────────────────────────── */}
+      <div className="inv-amount-words" style={{
+        margin: `0 ${G} 16px`,
+        padding: '10px 14px',
+        background: '#F8F6F2',
+        borderLeft: '3px solid #D0CEC7',
+      }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+          textTransform: 'uppercase', color: '#9B9891', marginRight: 8,
+        }}>
+          Arrêté la présente facture à la somme de :
+        </span>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#3D3C3A', fontStyle: 'italic' }}>
+          {totalWords}
+        </span>
+      </div>
+
+      {/* ── Notes ─────────────────────────────────────────── */}
+      {invoice.notes && (
+        <div className="inv-notes" style={{ margin: `0 ${G} 16px` }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9B9891', marginBottom: 4 }}>
+            Notes
+          </p>
+          <p style={{ fontSize: 12, color: '#6B6860', whiteSpace: 'pre-wrap', lineHeight: 1.65, margin: 0 }}>
+            {invoice.notes}
+          </p>
+        </div>
+      )}
+
+      {/* ── 7. Footer: thank-you + signature ─────────────── */}
+      <div className="inv-footer" style={{
+        padding: `16px ${G} 28px`,
+        borderTop: '1px solid #ECEAE4',
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        marginTop: 4,
+      }}>
+        <p className="inv-footer-text" style={{
+          fontSize: 11, color: ACCENT, fontWeight: 700,
+          letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0,
+        }}>
+          {invoice.profiles?.full_name || 'SAAD EDDINE KARIM'} VOUS REMERCIE POUR VOTRE CONFIANCE
+        </p>
+
+        <div className="inv-signature" style={{ textAlign: 'right' }}>
+          <div style={{
+            width: 160, height: 44,
+            borderBottom: '1.5px solid #3D3C3A',
+            marginBottom: 5, marginLeft: 'auto',
+          }} />
+          <p style={{ fontSize: 10.5, color: '#9B9891', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            Signature &amp; Cachet
+          </p>
+        </div>
+      </div>
+    </>
+  )
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* ── Styles ─────────────────────────────────────────────
-          Screen : flat white sheet, full-width within content area.
-          Print  : true A4 page — 210mm × 297mm, no card/sticker.
+          Two wrappers:
+            .invoice-doc  — screen only (responsive, mobile-adaptive)
+            .invoice-print — print/PDF only (always A4 desktop layout)
 
-          Root cause of the "centered sticker" problem:
-            - The React app has a sidebar + main wrapper that limits
-              the content column width and adds padding.
-            - On print we must escape that layout entirely so the
-              invoice fills the physical A4 page from edge to edge.
-
-          Fix:
-            - Hide everything except .invoice-doc (sidebar, nav,
-              the main wrapper, all .no-print elements).
-            - Force .invoice-doc to position:fixed top-left and fill
-              100vw × 100vh (which maps to full A4 in print mode).
-            - Internal padding (14mm sides) replaces @page margins.
+          Mobile CSS is scoped under ".invoice-doc" so it never
+          affects .invoice-print. Print CSS only targets .invoice-print,
+          so zero mobile-override "undo" work is needed.
       ─────────────────────────────────────────────────────── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-        /* ── @page must be top-level (not inside @media print) so that
-              mobile browsers (Chrome Android, Safari iOS) respect it.
-              margin:0 removes the browser-printed URL / date / page-number
-              headers and footers from the exported PDF. ── */
+        /* @page at top level so mobile browsers (Chrome Android,
+           Safari iOS) respect it. margin:0 removes browser headers/footers. */
         @page {
           size: A4 portrait;
           margin: 0;
         }
 
-        /* ── Screen ── */
+        /* ── Screen wrapper — responsive ── */
         .invoice-doc {
           width: 100%;
           max-width: 860px;
           margin: 0 auto;
           box-sizing: border-box;
           overflow-x: hidden;
+          background: #fff;
+          border: 1px solid #E4E2DC;
+          font-family: "DM Sans", system-ui, sans-serif;
+          font-size: 13px;
+          color: #1A1917;
         }
 
-        /* ── Mobile invoice adjustments ── */
+        /* ── Print wrapper — always hidden on screen ── */
+        .invoice-print {
+          display: none;
+        }
+
+        /* ── Mobile: only affects .invoice-doc (scoped) ── */
         @media (max-width: 767px) {
-          /* Reduce all section paddings/margins to fit phone width */
-          .invoice-header-stripe  { padding: 12px 16px !important; }
-          .invoice-emitter-meta   { padding: 16px 16px 14px !important; grid-template-columns: 1fr !important; gap: 14px !important; }
-          .invoice-client-block   { margin: 10px 16px 14px !important; }
-          .invoice-items-wrap     { padding: 0 10px !important; }
-          .invoice-totals-wrap    { padding: 8px 16px 14px !important; }
-          .invoice-totals-inner   { min-width: unset !important; width: 100% !important; }
-          .invoice-amount-words   { margin: 0 16px 12px !important; }
-          .invoice-notes-wrap     { margin: 0 16px 12px !important; }
-          .invoice-footer         { padding: 14px 16px 22px !important; flex-direction: column !important; gap: 14px !important; align-items: flex-start !important; }
-
-          /* Emitter meta: table becomes left-aligned on mobile */
-          .invoice-emitter-meta > *:last-child { text-align: left !important; }
-          .invoice-emitter-meta table { margin-left: 0 !important; text-align: left !important; }
-          .invoice-emitter-meta table td { text-align: left !important; white-space: normal !important; }
-          .invoice-emitter-meta table td:first-child { padding-right: 8px !important; }
-
-          /* Client grid: single column */
-          .invoice-client-grid { grid-template-columns: 1fr !important; }
-
-          /* Table: tighter cells, hide unit price column */
-          .invoice-items-table { table-layout: fixed !important; width: 100% !important; }
-          .invoice-items-table th,
-          .invoice-items-table td { padding: 7px 6px !important; font-size: 11px !important; }
-          .invoice-items-table th:nth-child(1),
-          .invoice-items-table td:nth-child(1) { width: 32px !important; }
-          .invoice-items-table th:nth-child(3),
-          .invoice-items-table td:nth-child(3) { display: none !important; }
-          .invoice-items-table th:nth-child(4),
-          .invoice-items-table td:nth-child(4) { width: 80px !important; }
-
-          /* Footer signature: left-align on mobile */
-          .invoice-signature { text-align: left !important; }
-          .invoice-signature > div:first-child { margin-left: 0 !important; }
-          .invoice-footer-thankyou { font-size: 9.5px !important; }
+          .invoice-doc .inv-header {
+            padding: 12px 16px !important;
+          }
+          .invoice-doc .inv-emitter {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+            padding: 16px 16px 14px !important;
+          }
+          .invoice-doc .inv-emitter > *:last-child {
+            text-align: left !important;
+          }
+          .invoice-doc .inv-emitter table {
+            margin-left: 0 !important;
+            text-align: left !important;
+          }
+          .invoice-doc .inv-emitter table td {
+            text-align: left !important;
+            white-space: normal !important;
+          }
+          .invoice-doc .inv-emitter table td:first-child {
+            padding-right: 8px !important;
+          }
+          .invoice-doc .inv-client {
+            margin: 10px 16px 14px !important;
+          }
+          .invoice-doc .inv-client-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .invoice-doc .inv-items-wrap {
+            padding: 0 10px !important;
+          }
+          .invoice-doc .inv-items-table {
+            table-layout: fixed !important;
+          }
+          .invoice-doc .inv-items-table th,
+          .invoice-doc .inv-items-table td {
+            padding: 7px 6px !important;
+            font-size: 11px !important;
+          }
+          .invoice-doc .inv-items-table th:nth-child(1),
+          .invoice-doc .inv-items-table td:nth-child(1) {
+            width: 32px !important;
+          }
+          .invoice-doc .inv-items-table th:nth-child(3),
+          .invoice-doc .inv-items-table td:nth-child(3) {
+            display: none !important;
+          }
+          .invoice-doc .inv-items-table th:nth-child(4),
+          .invoice-doc .inv-items-table td:nth-child(4) {
+            width: 80px !important;
+          }
+          .invoice-doc .inv-totals-wrap {
+            padding: 8px 16px 14px !important;
+          }
+          .invoice-doc .inv-totals-inner {
+            min-width: unset !important;
+            width: 100% !important;
+          }
+          .invoice-doc .inv-amount-words {
+            margin: 0 16px 12px !important;
+          }
+          .invoice-doc .inv-notes {
+            margin: 0 16px 12px !important;
+          }
+          .invoice-doc .inv-footer {
+            padding: 14px 16px 22px !important;
+            flex-direction: column !important;
+            gap: 14px !important;
+            align-items: flex-start !important;
+          }
+          .invoice-doc .inv-footer-text {
+            font-size: 9.5px !important;
+          }
+          .invoice-doc .inv-signature {
+            text-align: left !important;
+          }
+          .invoice-doc .inv-signature > div:first-child {
+            margin-left: 0 !important;
+          }
         }
 
-        /* ── Print ── */
+        /* ── Print: show .invoice-print as a full A4 page ── */
         @media print {
-          /* 1. Clamp document to one A4 page.
-                overflow:hidden on both html and body prevents any
-                off-screen content from generating a blank second page. */
           html, body {
             margin: 0 !important;
             padding: 0 !important;
@@ -341,25 +659,23 @@ export default function InvoiceDetail() {
             print-color-adjust: exact;
           }
 
-          /* 2. Hide every element — then selectively reveal the invoice.
-                Sidebar, mobile top-bar, breadcrumb, action buttons, etc.
-                all become invisible. */
+          /* Hide everything, then reveal only the print wrapper */
           body * {
             visibility: hidden !important;
           }
-          .invoice-doc,
-          .invoice-doc * {
+          .invoice-print,
+          .invoice-print * {
             visibility: visible !important;
           }
 
-          /* 3. Snap the invoice to fill the A4 page.
-                width:210mm forces the layout to render at full A4 width
-                (≈794px) so content does not wrap at the mobile viewport
-                width (≈390px). Without this, wrapped text makes the
-                invoice taller than 297mm and overflows to a second page.
-                The top-level @page { margin:0 } in index.css ensures the
-                print area is exactly 210mm, so there is no right clipping. */
+          /* .invoice-doc stays hidden during print */
           .invoice-doc {
+            display: none !important;
+          }
+
+          /* .invoice-print fills the A4 page at desktop proportions */
+          .invoice-print {
+            display: block !important;
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -369,53 +685,12 @@ export default function InvoiceDetail() {
             padding: 0 !important;
             border: none !important;
             box-shadow: none !important;
-            border-radius: 0 !important;
-            overflow: visible !important;
             background: #fff !important;
             font-family: "DM Sans", system-ui, sans-serif !important;
             font-size: 13px !important;
             color: #1A1917 !important;
+            overflow: visible !important;
           }
-
-          /* 4. Undo mobile layout overrides — always print as desktop */
-          .invoice-header-stripe  { padding: 16px 36px !important; }
-          .invoice-emitter-meta {
-            display: grid !important;
-            grid-template-columns: 1fr auto !important;
-            gap: 32px !important;
-            padding: 22px 36px 18px !important;
-          }
-          .invoice-emitter-meta > *:last-child { text-align: right !important; }
-          .invoice-emitter-meta table { margin-left: auto !important; text-align: right !important; }
-          .invoice-emitter-meta table td { text-align: right !important; white-space: nowrap !important; }
-          .invoice-client-block { margin: 16px 36px 18px !important; }
-          .invoice-client-grid {
-            display: grid !important;
-            grid-template-columns: auto 1fr !important;
-          }
-          .invoice-items-wrap { padding: 0 36px !important; }
-          .invoice-items-table { table-layout: auto !important; }
-          .invoice-items-table th,
-          .invoice-items-table td { padding: 10px 10px !important; font-size: 13px !important; }
-          .invoice-items-table th:nth-child(1),
-          .invoice-items-table td:nth-child(1) { width: 52px !important; }
-          .invoice-items-table th:nth-child(3),
-          .invoice-items-table td:nth-child(3) {
-            display: table-cell !important;
-            visibility: visible !important;
-          }
-          .invoice-totals-wrap  { padding: 10px 36px 18px !important; }
-          .invoice-totals-inner { min-width: 260px !important; width: auto !important; }
-          .invoice-amount-words { margin: 0 36px 16px !important; }
-          .invoice-notes-wrap   { margin: 0 36px 16px !important; }
-          .invoice-footer {
-            padding: 16px 36px 28px !important;
-            flex-direction: row !important;
-            gap: 0 !important;
-            align-items: flex-end !important;
-          }
-          .invoice-signature { text-align: right !important; }
-          .invoice-signature > div:first-child { margin-left: auto !important; }
         }
       `}</style>
 
@@ -449,320 +724,15 @@ export default function InvoiceDetail() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════
-          PRINTABLE INVOICE DOCUMENT
-      ══════════════════════════════════════════════════════ */}
-      <div
-        className="invoice-doc"
-        style={{
-          background: '#fff',
-          fontFamily: '"DM Sans", system-ui, sans-serif',
-          fontSize: 13,
-          color: '#1A1917',
-          /* Screen: flat sheet look, no card/sticker/shadow */
-          border: '1px solid #E4E2DC',
-          borderRadius: 0,
-          overflow: 'visible',
-          boxShadow: 'none',
-        }}
-      >
-
-        {/* ── 1. Header stripe ─────────────────────────────── */}
-        <div className="invoice-header-stripe" style={{
-          background: ACCENT,
-          padding: `16px ${G}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-        }}>
-          <span style={{
-            fontSize: 34, fontWeight: 800, color: '#fff',
-            letterSpacing: '0.1em', textTransform: 'uppercase',
-          }}>
-            {docLabel}
-          </span>
-        </div>
-
-        {/* ── 2. Emitter (left) + Invoice meta (right) ─────── */}
-        <div
-          className="invoice-emitter-meta"
-          style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto',
-          gap: 32,
-          padding: `22px ${G} 18px`,
-          borderBottom: `1.5px solid #ECEAE4`,
-          alignItems: 'start',
-        }}>
-
-          {/* Left — business info block, slightly stronger */}
-          <div>
-            {/* Name as bold header */}
-            <p style={{
-              fontWeight: 800, fontSize: 14, color: '#111110',
-              margin: '0 0 6px', letterSpacing: '0.01em',
-              textTransform: 'uppercase',
-            }}>
-              SAAD EDDINE KARIM
-            </p>
-            {/* ICE on its own line, prominent */}
-            <p style={{
-              margin: '0 0 6px', fontSize: 11, color: '#6B6860',
-              display: 'flex', alignItems: 'baseline', gap: 6,
-            }}>
-              <span style={{ fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 10, color: '#9B9891' }}>ICE</span>
-              <span style={{ ...NUM, fontSize: 12, color: '#3D3C3A', fontWeight: 600 }}>003620072000106</span>
-            </p>
-            {/* Address lines compact */}
-            <p style={{ margin: '0 0 1px', fontSize: 11.5, color: '#6B6860', lineHeight: 1.6 }}>
-              PALM ZENATA IMMEUBLE B NR 36 ZENATA CASABLANCA
-            </p>
-            {/* Contact row */}
-            <p style={{ margin: '4px 0 0', fontSize: 11.5, color: '#6B6860', display: 'flex', gap: 14 }}>
-              <span>06 61 94 90 01</span>
-              <span style={{ color: ACCENT }}>saadinek@gmail.com</span>
-            </p>
-          </div>
-
-          {/* Right — invoice meta table, right-aligned */}
-          <div>
-            <table style={{ borderCollapse: 'collapse', textAlign: 'right' }}>
-              <tbody>
-                {[
-                  { label: 'N° de facture', value: invoice.number || invoice.invoice_number || '—', bold: true },
-                  { label: 'Date d\'émission', value: formatDate(invoice.issue_date || invoice.invoice_date) },
-                  ...(invoice.due_date ? [{ label: 'Date d\'échéance', value: formatDate(invoice.due_date) }] : []),
-                ].map(({ label, value, bold }) => (
-                  <tr key={label}>
-                    <td style={{
-                      fontSize: 11, color: '#9B9891', fontWeight: 500,
-                      paddingRight: 12, paddingBottom: 5,
-                      textAlign: 'right', whiteSpace: 'nowrap',
-                      letterSpacing: '0.02em',
-                    }}>
-                      {label}
-                    </td>
-                    <td style={{
-                      paddingBottom: 5,
-                      ...NUM, fontSize: 13,
-                      fontWeight: bold ? 700 : 600,
-                      color: bold ? '#111110' : '#3D3C3A',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {value}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ── 3. Client block — left-border accent, no background box ── */}
-        <div className="invoice-client-block" style={{
-          margin: `16px ${G} 18px`,
-          padding: '12px 16px',
-          borderLeft: `3px solid ${ACCENT}`,
-          background: '#FAFAF8',
-        }}>
-          <p style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
-            textTransform: 'uppercase', color: '#9B9891', margin: '0 0 6px',
-          }}>
-            Facturé à
-          </p>
-          {client ? (
-            <div className="invoice-client-grid" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 32, rowGap: 2 }}>
-              {/* Client name — full width */}
-              <p style={{ fontWeight: 700, fontSize: 14, color: '#111110', margin: 0, gridColumn: '1 / -1', marginBottom: 5 }}>
-                {client.name || client.company || '—'}
-              </p>
-              {/* Fields in two-column layout for compactness */}
-              {client.company && client.name && (
-                <>
-                  <span style={{ fontSize: 11, color: '#9B9891', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Société</span>
-                  <span style={{ fontSize: 12, color: '#3D3C3A' }}>{client.company}</span>
-                </>
-              )}
-              {client.ice && (
-                <>
-                  <span style={{ fontSize: 11, color: '#9B9891', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>ICE</span>
-                  <span style={{ ...NUM, fontSize: 12, color: '#3D3C3A' }}>{client.ice}</span>
-                </>
-              )}
-              {client.address && (
-                <>
-                  <span style={{ fontSize: 11, color: '#9B9891', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Adresse</span>
-                  <span style={{ fontSize: 12, color: '#3D3C3A' }}>{client.address}</span>
-                </>
-              )}
-              {client.email && (
-                <>
-                  <span style={{ fontSize: 11, color: '#9B9891', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Email</span>
-                  <span style={{ fontSize: 12, color: '#3D3C3A' }}>{client.email}</span>
-                </>
-              )}
-            </div>
-          ) : (
-            <p style={{ fontSize: 12, color: '#B0ADA8', fontStyle: 'italic', margin: 0 }}>
-              Aucun client associé
-            </p>
-          )}
-        </div>
-
-        {/* ── 4. Line items table ───────────────────────────── */}
-        <div className="invoice-items-wrap" style={{ padding: `0 ${G}` }}>
-          <table className="invoice-items-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: ACCENT }}>
-                {[
-                  { label: 'Qté',           align: 'center', w: '52px'  },
-                  { label: 'Description',   align: 'left',   w: 'auto'  },
-                  { label: 'Prix unit. HT', align: 'right',  w: '110px' },
-                  { label: 'Total HT',      align: 'right',  w: '110px' },
-                ].map(col => (
-                  <th key={col.label} style={{
-                    padding: '9px 10px',
-                    fontSize: 10, fontWeight: 700,
-                    letterSpacing: '0.06em', textTransform: 'uppercase',
-                    color: '#fff', textAlign: col.align,
-                    width: col.w, border: 'none',
-                  }}>
-                    {col.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 ? (
-                <tr>
-                  <td colSpan={4} style={{
-                    padding: '18px 10px', textAlign: 'center',
-                    fontSize: 12, color: '#B0ADA8', fontStyle: 'italic',
-                    borderBottom: '1px solid #ECEAE4',
-                  }}>
-                    Aucune ligne.
-                  </td>
-                </tr>
-              ) : items.map((item, idx) => {
-                const lineTotal = Number(item.quantity) * Number(item.unit_price)
-                const isOdd     = idx % 2 === 1
-                return (
-                  <tr key={item.id ?? idx} style={{ background: isOdd ? '#FDF9F5' : '#fff' }}>
-                    <td style={{ padding: '10px 10px', textAlign: 'center', borderBottom: '1px solid #F0EEE9', ...NUM, fontSize: 13, color: '#3D3C3A' }}>
-                      {item.quantity}
-                    </td>
-                    <td style={{ padding: '10px 10px', borderBottom: '1px solid #F0EEE9', fontSize: 12.5, color: '#111110', lineHeight: 1.55 }}>
-                      {item.description}
-                    </td>
-                    <td style={{ padding: '10px 10px', textAlign: 'right', borderBottom: '1px solid #F0EEE9', ...NUM, fontSize: 13, color: '#555250' }}>
-                      {formatCurrency(item.unit_price)}
-                    </td>
-                    <td style={{ padding: '10px 10px', textAlign: 'right', borderBottom: '1px solid #F0EEE9', ...NUM, fontSize: 13, fontWeight: 600, color: '#111110' }}>
-                      {formatCurrency(lineTotal)}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ── 5. Totals block ───────────────────────────────── */}
-        <div className="invoice-totals-wrap" style={{ padding: `10px ${G} 18px`, display: 'flex', justifyContent: 'flex-end' }}>
-          <div className="invoice-totals-inner" style={{ minWidth: 260 }}>
-
-            {/* Sous-total row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderTop: '1px solid #ECEAE4' }}>
-              <span style={{ fontSize: 12, color: '#6B6860' }}>Sous-total HT</span>
-              <span style={{ ...NUM, fontSize: 13, color: '#3D3C3A' }}>{formatCurrency(subtotal)}</span>
-            </div>
-
-            {/* TVA row */}
-            {taxRate > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderTop: '1px solid #F5F4F1' }}>
-                <span style={{ fontSize: 12, color: '#6B6860' }}>TVA ({taxRate}%)</span>
-                <span style={{ ...NUM, fontSize: 13, color: '#3D3C3A' }}>{formatCurrency(taxAmount)}</span>
-              </div>
-            )}
-
-            {/* TOTAL — premium orange bar */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: ACCENT, padding: '10px 14px', marginTop: 6,
-            }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                Total TTC
-              </span>
-              <span style={{ ...NUM, fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
-                {formatCurrency(total)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── 6. Amount in words ────────────────────────────── */}
-        <div className="invoice-amount-words" style={{
-          margin: `0 ${G} 16px`,
-          padding: '10px 14px',
-          background: '#F8F6F2',
-          borderLeft: '3px solid #D0CEC7',
-        }}>
-          <span style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
-            textTransform: 'uppercase', color: '#9B9891', marginRight: 8,
-          }}>
-            Arrêté la présente facture à la somme de :
-          </span>
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: '#3D3C3A', fontStyle: 'italic' }}>
-            {totalWords}
-          </span>
-        </div>
-
-        {/* ── Notes ─────────────────────────────────────────── */}
-        {invoice.notes && (
-          <div className="invoice-notes-wrap" style={{ margin: `0 ${G} 16px` }}>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9B9891', marginBottom: 4 }}>
-              Notes
-            </p>
-            <p style={{ fontSize: 12, color: '#6B6860', whiteSpace: 'pre-wrap', lineHeight: 1.65, margin: 0 }}>
-              {invoice.notes}
-            </p>
-          </div>
-        )}
-
-        {/* ── 7. Footer: thank-you + signature ─────────────── */}
-        <div className="invoice-footer" style={{
-          padding: `16px ${G} 28px`,
-          borderTop: '1px solid #ECEAE4',
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          marginTop: 4,
-        }}>
-          {/* Thank-you */}
-          <p className="invoice-footer-thankyou" style={{
-            fontSize: 11, color: ACCENT, fontWeight: 700,
-            letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0,
-          }}>
-            {invoice.profiles?.full_name || 'SAAD EDDINE KARIM'} VOUS REMERCIE POUR VOTRE CONFIANCE
-          </p>
-
-          {/* Signature */}
-          <div className="invoice-signature" style={{ textAlign: 'right' }}>
-            <div style={{
-              width: 160, height: 44,
-              borderBottom: '1.5px solid #3D3C3A',
-              marginBottom: 5, marginLeft: 'auto',
-            }} />
-            <p style={{ fontSize: 10.5, color: '#9B9891', margin: 0, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Signature &amp; Cachet
-            </p>
-          </div>
-        </div>
-
+      {/* ── Screen layout (responsive) ── */}
+      <div className="invoice-doc">
+        {invoiceBody}
       </div>
-      {/* end .invoice-doc */}
+
+      {/* ── Print/PDF layout (dedicated, always A4 desktop) ── */}
+      <div className="invoice-print">
+        {invoiceBody}
+      </div>
 
     </div>
   )
