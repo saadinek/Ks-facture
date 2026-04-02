@@ -263,7 +263,7 @@ input[type="date"] {
     overflow: hidden !important;
   }
   body {
-    width: 100% !important;
+    width: 210mm !important;
     height: 297mm !important;
     overflow: hidden !important;
     -webkit-print-color-adjust: exact;

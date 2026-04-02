@@ -312,19 +312,13 @@ export default function InvoiceDetail() {
 
         /* ── Print ── */
         @media print {
-          /* 1. Clamp document to exactly one A4 page.
-                width:100% (not 210mm) so the invoice always fills whatever
-                print area the mobile browser decides — avoids right-side
-                clipping when the browser applies its own margins.
-                overflow:hidden prevents any off-screen content from
-                generating a blank second page. */
-          html {
-            overflow: hidden !important;
-          }
-          body {
+          /* 1. Clamp document to one A4 page.
+                overflow:hidden on both html and body prevents any
+                off-screen content from generating a blank second page. */
+          html, body {
             margin: 0 !important;
             padding: 0 !important;
-            width: 100% !important;
+            width: 210mm !important;
             height: 297mm !important;
             overflow: hidden !important;
             background: #fff !important;
@@ -334,8 +328,7 @@ export default function InvoiceDetail() {
 
           /* 2. Hide every element — then selectively reveal the invoice.
                 Sidebar, mobile top-bar, breadcrumb, action buttons, etc.
-                all become invisible. They still occupy flow space but are
-                clipped by body { height: 297mm; overflow: hidden } above. */
+                all become invisible. */
           body * {
             visibility: hidden !important;
           }
@@ -344,15 +337,19 @@ export default function InvoiceDetail() {
             visibility: visible !important;
           }
 
-          /* 3. Snap the invoice to the top-left of the print area.
-                width:100% / max-width:100% ensure it never overflows
-                horizontally regardless of browser print margin handling. */
+          /* 3. Snap the invoice to fill the A4 page.
+                width:210mm forces the layout to render at full A4 width
+                (≈794px) so content does not wrap at the mobile viewport
+                width (≈390px). Without this, wrapped text makes the
+                invoice taller than 297mm and overflows to a second page.
+                The top-level @page { margin:0 } in index.css ensures the
+                print area is exactly 210mm, so there is no right clipping. */
           .invoice-doc {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
+            width: 210mm !important;
+            max-width: 210mm !important;
             margin: 0 !important;
             padding: 0 !important;
             border: none !important;
