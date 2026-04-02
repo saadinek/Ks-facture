@@ -210,8 +210,31 @@ export default function InvoiceDetail() {
     const filename  = makePdfFilename(invoice)
     const prevTitle = document.title
     document.title  = filename
-    window.print()
-    setTimeout(() => { document.title = prevTitle }, 500)
+
+    // On iOS (iPhone/iPad), the print engine uses the screen viewport as its
+    // render width — setting width=210mm in CSS is ignored.  Widening the
+    // viewport to 794px (A4 @ 96 dpi) before print() forces iOS to render
+    // the invoice at full A4 width and then scale it onto the paper, which
+    // eliminates right-side clipping.  We restore the viewport afterwards.
+    const viewportMeta = document.querySelector('meta[name="viewport"]')
+    const prevViewport = viewportMeta ? viewportMeta.content : null
+    const isMobile     = window.innerWidth < 900
+
+    const restore = () => {
+      document.title = prevTitle
+      if (isMobile && viewportMeta && prevViewport !== null) {
+        viewportMeta.content = prevViewport
+      }
+    }
+
+    if (isMobile && viewportMeta) {
+      viewportMeta.content = 'width=794, initial-scale=1, shrink-to-fit=no'
+      // Wait for the browser to reflow at the new viewport before printing
+      setTimeout(() => { window.print(); setTimeout(restore, 1000) }, 400)
+    } else {
+      window.print()
+      setTimeout(restore, 500)
+    }
   }
 
   // ── Derived values ────────────────────────────────────────
@@ -646,17 +669,20 @@ export default function InvoiceDetail() {
           }
         }
 
-        /* ── Print: show .invoice-print as a full A4 page ── */
+        /* ── Print: show .invoice-print as a full-page layout ──
+           Strategy: we widen the viewport to 794px via JS before
+           window.print() on mobile, so "width: 100%" here = A4 width.
+           On desktop the viewport is already wide enough.
+           position: absolute (not fixed) works more reliably on iOS WebKit.
+        ── */
         @media print {
           html, body {
             margin: 0 !important;
             padding: 0 !important;
-            width: 210mm !important;
-            height: 297mm !important;
             overflow: hidden !important;
             background: #fff !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
 
           /* Hide everything, then reveal only the print wrapper */
@@ -673,14 +699,17 @@ export default function InvoiceDetail() {
             display: none !important;
           }
 
-          /* .invoice-print fills the A4 page at desktop proportions */
+          /* .invoice-print fills the full print viewport.
+             On desktop that is ~794px (A4).
+             On iOS we forced the viewport to 794px in JS before print(),
+             so this also ends up at A4 width with no clipping. */
           .invoice-print {
             display: block !important;
-            position: fixed !important;
+            position: absolute !important;
             top: 0 !important;
             left: 0 !important;
-            width: 210mm !important;
-            max-width: 210mm !important;
+            width: 100% !important;
+            max-width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             border: none !important;
@@ -689,7 +718,9 @@ export default function InvoiceDetail() {
             font-family: "DM Sans", system-ui, sans-serif !important;
             font-size: 13px !important;
             color: #1A1917 !important;
-            overflow: visible !important;
+            overflow: hidden !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
         }
       `}</style>
