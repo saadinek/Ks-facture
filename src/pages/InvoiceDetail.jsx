@@ -709,23 +709,29 @@ export default function InvoiceDetail() {
         {invoiceBody}
       </div>
 
-      {/* ── PDF capture target — visually hidden, always rendered at 794px ── */}
-      <div
-        id="invoice-print-target"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: '-9999px',
-          width: 794,
-          background: '#fff',
-          fontFamily: '"DM Sans", system-ui, sans-serif',
-          fontSize: 13,
-          color: '#1A1917',
-          pointerEvents: 'none',
-          zIndex: -1,
-        }}
-      >
-        {invoiceBody}
+      {/* ── PDF capture target ──────────────────────────────────
+          Wrapped in a zero-height overflow:hidden container so it
+          never contributes to scroll/page height.  This prevents
+          browser print (Ctrl+P, share→print) from generating a
+          blank second page due to off-screen content.
+          html2canvas finds it by ID inside the wrapper.
+      ───────────────────────────────────────────────────────── */}
+      <div style={{ height: 0, overflow: 'hidden', position: 'relative', pointerEvents: 'none' }}>
+        <div
+          id="invoice-print-target"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 794,
+            background: '#fff',
+            fontFamily: '"DM Sans", system-ui, sans-serif',
+            fontSize: 13,
+            color: '#1A1917',
+          }}
+        >
+          {invoiceBody}
+        </div>
       </div>
 
     </div>
